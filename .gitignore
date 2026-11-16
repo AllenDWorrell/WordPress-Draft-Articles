@@ -14,5 +14,6 @@ __pycache__/
 *.py[cod]
 .agents/
 .codex/
+.impeccable/
 .vscode/
 .venv/
