@@ -4,12 +4,10 @@ from types import SimpleNamespace
 from unittest.mock import Mock,patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import app
-from indd_text import extract_issue
-from indd_reader import Box,Story,group_articles
+from indd_reader import Box,Story,group_articles,SIGNATURE
 from xml.etree import ElementTree
 
 ROOT=Path(__file__).resolve().parents[1]
-RECIPE=json.loads((ROOT/'issue-recipes/current-vol37-issue4.json').read_text('utf8'))
 
 class WorkbenchTests(unittest.TestCase):
     def setUp(self):
@@ -148,15 +146,7 @@ class WorkbenchTests(unittest.TestCase):
         with patch.object(app,'wp_request',return_value=[]) as request:
             with self.assertRaisesRegex(ValueError,'existing categor'):app.create_draft(self.p,self.a['id'],self.c)
             self.assertEqual(request.call_count,1)
-    def test_native_recipe_contains_articles_only(self):
-        self.assertEqual(len(RECIPE['items']),15)
-        self.assertEqual(sum(len(a['parts']) for a in RECIPE['items']),18)
-        self.assertTrue(all(a['kind']=='article' for a in RECIPE['items']))
-    def test_altered_file_is_rejected(self):
-        from indd_text import SIGNATURE
-        with self.assertRaisesRegex(ValueError,'not supported'):extract_issue(SIGNATURE+b'changed',RECIPE)
-    def test_indd_without_recipe_opens_for_review(self):
-        from indd_text import SIGNATURE
+    def test_indd_opens_for_review(self):
         raw = SIGNATURE + b'another INDD'
         app.set_active_issue(None)
         recovered = [dict(title='A different issue', authors=['Allen Worrell'], kind='article',
@@ -361,10 +351,6 @@ class WorkbenchTests(unittest.TestCase):
         self.p['source_hash'] = hashlib.sha256(raw).hexdigest()
         self.a['title'] = 'Saved headline'
         app.save(self.p)
-        recipes = app.DATA / 'issue-recipes'
-        recipes.mkdir()
-        (recipes / 'test.json').write_text(json.dumps(dict(source_sha256=self.p['source_hash'])), 'utf8')
-
         handler = object.__new__(app.Handler)
         handler.server = SimpleNamespace(server_port=8765)
         handler.headers = {'Host': '127.0.0.1:8765', 'X-Workbench-Token': app.TOKEN}
@@ -402,20 +388,6 @@ class WorkbenchTests(unittest.TestCase):
             self.assertEqual(status, 200)
             self.assertEqual(result['id'], self.sid)
             self.assertEqual(result['articles'][0]['title'], 'Saved headline')
-    def test_real_indd_all_frames_without_other_sources(self):
-        paths=list((ROOT/'native-data').glob('*/source.indd'))
-        if not paths:self.skipTest('Original INDD not bundled. Reimport it to run this source-byte check.')
-        raw=paths[0].read_bytes();items=extract_issue(raw,RECIPE)
-        self.assertEqual(len(items),15)
-        self.assertTrue(all(a['body'].strip() for a in items))
-        self.assertTrue(items[13]['body'].endswith('out of the water.”'))
-        self.assertTrue(items[0]['body'].endswith('Huntsville, Ala.'))
-        self.assertIn('there.”',items[5]['body'])
-        self.assertIn('treasure, for real.',items[7]['body'])
-        for item,original in zip(items,RECIPE['items']):
-            for part in original['parts']:
-                text=''.join(raw[start:end].decode(codec) for start,end,codec in part['spans'])
-                self.assertEqual(hashlib.sha256(text.encode('utf8')).hexdigest(),part['sha256'])
 
 class LocalServerPolicyTests(unittest.TestCase):
     def test_strict_csp_and_requests_stay_protected(self):

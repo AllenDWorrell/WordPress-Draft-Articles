@@ -9,7 +9,7 @@ from urllib.parse import unquote
 from xml.etree import ElementTree
 from zipfile import BadZipFile, ZipFile
 
-from indd_text import SIGNATURE
+SIGNATURE = bytes.fromhex('0606edf5d81d46e5bd31efe7fe74b71d')
 
 
 @dataclass(frozen=True)

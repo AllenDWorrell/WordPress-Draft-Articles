@@ -1,9 +1,8 @@
 """The Current: INDD workbench for WordPress drafts."""
-import argparse,copy,hashlib,html,json,mimetypes,re,secrets,threading
+import argparse,copy,hashlib,html,json,mimetypes,re,secrets,threading,unicodedata
 import urllib.parse,uuid,webbrowser
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
-from indd_text import extract_issue,author_slug
 from indd_reader import read_indd
 from wordpress import (WordPressError, load_settings, request as wp_request,
                        validate_site as validate_wordpress_site,
@@ -25,6 +24,10 @@ def wordpress_settings():
     return load_settings(ROOT,DEFAULT_SITE)
 
 def uid():return uuid.uuid4().hex
+
+def author_slug(value):
+    value=unicodedata.normalize('NFKD',str(value)).encode('ascii','ignore').decode('ascii').lower()
+    return re.sub(r'[^a-z0-9]+','-',value).strip('-')
 
 def is_article(item):return item.get('kind','article')=='article'
 def folder(sid):
@@ -152,10 +155,6 @@ def require_active_issue(issue_id):
     if not issue_id or issue_id != active_issue_id():
         raise ValueError('This INDD is no longer open. Refresh the app to continue.')
 
-def extraction_recipe(digest):
-    recipes = (json.loads(path.read_text('utf8')) for path in (ROOT/'issue-recipes').glob('*.json'))
-    return next((recipe for recipe in recipes if recipe['source_sha256'] == digest), None)
-
 def import_indd(raw,name):
     if active_issue_id():
         raise ValueError('Close the open INDD before choosing another file.')
@@ -166,14 +165,13 @@ def import_indd(raw,name):
         project = load(saved['id'])
         set_active_issue(project['id'])
         return project
-    recipe = extraction_recipe(digest)
-    recovered = extract_issue(raw, recipe) if recipe else read_indd(raw, ROOT / 'tools' / 'indd.exe')
+    recovered = read_indd(raw, ROOT / 'tools' / 'indd.exe')
     sid=uid();dest=DATA/sid;dest.mkdir();(dest/'source.indd').write_bytes(raw)
     items=[]
     for item in recovered:
         if not is_article(item):continue
         a=article(item['title']);a.update(body=item['body'],source_body=item['body'],kind=item['kind'],native_key=item['native_key'],
-                  source='INDD',source_parts=item['source_parts'],source_bytes_verified=bool(recipe),
+                  source='INDD',source_parts=item['source_parts'],
                   source_section=item.get('source_section', ''))
         a['authors']=[dict(name=name,slug='',handle='',wp_slug='',url='',wp_user_id=None,
                            wp_site='',byline_only=False) for name in item['authors']]
@@ -181,8 +179,8 @@ def import_indd(raw,name):
         a['tags']+=a['generated_author_tags']
         apply_default_tags(a)
         items.append(a)
-    project=dict(id=sid,name=recipe['issue'] if recipe else Path(name).stem,source_name=name,source_hash=digest,
-                 mode='indd-only',text_only=True,articles=items,notes=recipe['notes'] if recipe else [],
+    project=dict(id=sid,name=Path(name).stem,source_name=name,source_hash=digest,
+                 mode='indd-only',text_only=True,articles=items,notes=[],
                  summary=dict(items=len(items),native_frames=sum(len(a['source_parts']) for a in items)))
     save(project)
     set_active_issue(sid)
@@ -287,15 +285,11 @@ def prepare_issue(project, connection):
                 unresolved+=1
     missing_sections = [a for a in pending if a.get('source') == 'INDD' and 'source_section' not in a]
     if missing_sections:
-        recipe = extraction_recipe(project.get('source_hash'))
-        if recipe:
-            sections = {str(i): item.get('section', '') for i, item in enumerate(recipe['items'], 1)}
-        else:
-            source = folder(project['id'])/'source.indd'
-            sections = {}
-            if source.is_file():
-                items = read_indd(source.read_bytes(), ROOT/'tools'/'indd.exe')
-                sections = {item['native_key']: item.get('source_section', '') for item in items}
+        source = folder(project['id'])/'source.indd'
+        sections = {}
+        if source.is_file():
+            items = read_indd(source.read_bytes(), ROOT/'tools'/'indd.exe')
+            sections = {item['native_key']: item.get('source_section', '') for item in items}
         for a in missing_sections:
             a['source_section'] = sections.get(a.get('native_key'), '')
 

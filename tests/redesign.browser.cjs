@@ -14,7 +14,7 @@ function fixture() {
     ['Building a more connected university', 'News', false],
     ['Sharks speak: what would you change on campus?', 'Opinions', false],
     ['A season to remember', 'Sports', false]
-  ].map(([title, section, reviewed], i) => ({ id: String(i + 1), title, body: [paragraph, paragraph, paragraph].join('\n\n'), authors: [{name: i === 1 ? 'Jordan Cole' : 'Alex Rivera', handle: '', url: '', byline_only: true}], categories: section ? [section] : [], tags: ['add-about'], source: 'INDD', source_section: section, source_bytes_verified: false, reviewed, auto_author_tags: false, default_tags_version: 1 })) };
+  ].map(([title, section, reviewed], i) => ({ id: String(i + 1), title, body: [paragraph, paragraph, paragraph].join('\n\n'), authors: [{name: i === 1 ? 'Jordan Cole' : 'Alex Rivera', handle: '', url: '', byline_only: true}], categories: section ? [section] : [], tags: ['add-about'], source: 'INDD', source_section: section, reviewed, auto_author_tags: false, default_tags_version: 1 })) };
 }
 async function open(browser, viewport, project = fixture()) {
   const context = await browser.newContext({ viewport, reducedMotion: 'reduce' });
