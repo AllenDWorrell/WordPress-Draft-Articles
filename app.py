@@ -79,8 +79,13 @@ def load(sid):
         project['articles']=[a for a in project['articles'] if is_article(a)]
         changed=True
     for a in project['articles']:
-        clean_authors=[{'name': person.get('name','').strip(), 'slug': (person.get('slug') or person.get('wp_slug') or '').strip()}
-                       for person in a.get('authors',[])]
+        clean_authors=[]
+        for person in a.get('authors',[]):
+            clean=copy.deepcopy(person)
+            clean['name']=person.get('name','').strip()
+            clean['slug']=(person.get('slug') or person.get('wp_slug') or '').strip()
+            clean.setdefault('handle','')
+            clean_authors.append(clean)
         if clean_authors != a.get('authors',[]):
             a['authors']=clean_authors
             changed=True
@@ -187,7 +192,8 @@ def import_indd(raw,name):
         a=article(item['title']);a.update(body=item['body'],source_body=item['body'],kind=item['kind'],native_key=item['native_key'],
                   source='INDD',source_parts=item['source_parts'],source_bytes_verified=bool(recipe),
                   source_section=item.get('source_section', ''))
-        a['authors']=[dict(name=name,slug='') for name in item['authors']]
+        a['authors']=[dict(name=name,slug='',handle='',wp_slug='',url='',wp_user_id=None,
+                           wp_site='',byline_only=False) for name in item['authors']]
         a['generated_author_tags']=['coauthor-'+author_slug(p['name']) for p in a['authors']]
         a['tags']+=a['generated_author_tags']
         apply_default_tags(a)
@@ -203,21 +209,23 @@ def post_text(a, site=''):
     authors=[person for person in a.get('authors',[]) if str(person.get('name','')).strip()]
     paragraphs=[]
     if authors:
-        rendered=[]
-        for person in authors:
-            name=html.escape(str(person['name']).strip())
-            author_slug=str(person.get('slug','')).strip()
-            href=site.rstrip('/')+'/author/'+urllib.parse.quote(author_slug,safe='')+'/' if site else '/author/'+urllib.parse.quote(author_slug,safe='')+'/'
-            rendered.append('<a href="'+html.escape(href,quote=True)+'">'+name+' </a>')
-        paragraphs.append('<p class="byline">By '+'and '.join(rendered)+'<span class="bybullet"> •</span></p>')
+        if a.get('body_html') and any(person.get('slug') or person.get('handle') or person.get('wp_slug') for person in authors):
+            rendered=[]
+            for person in authors:
+                name=html.escape(str(person['name']).strip())
+                author_slug=str(person.get('slug') or person.get('handle') or person.get('wp_slug') or '').strip()
+                href=site.rstrip('/')+'/author/'+urllib.parse.quote(author_slug,safe='')+'/' if site else '/author/'+urllib.parse.quote(author_slug,safe='')+'/'
+                rendered.append('<a href="'+html.escape(href,quote=True)+'">'+name+' </a>')
+            paragraphs.append('<p class="byline">By '+'and '.join(rendered)+'<span class="bybullet"> •</span></p>')
+        else:
+            paragraphs.append('By '+' and '.join(str(person['name']).strip() for person in authors))
     if a.get('body_html'):
         paragraphs.append(str(a['body_html']))
         return '\n'.join(paragraphs)
     body=str(a.get('body','')).replace('\r\n','\n').replace('\r','\n').strip()
     if body:
-        paragraphs.extend('<p>'+ '<br>'.join(html.escape(line) for line in part.split('\n')) +'</p>'
-                          for part in re.split(r'\n\s*\n',body) if part.strip())
-    return '\n'.join(paragraphs)
+        paragraphs.extend('\n'.join(part.split('\n')) for part in re.split(r'\n\s*\n',body) if part.strip())
+    return '\n\n'.join(paragraphs)
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self,*args,**kwargs):
@@ -276,9 +284,60 @@ def matching_term_ids(connection, kind, name):
     return [term['id'] for term in found
             if normalized_name(term['name']) == normalized_name(name) or term['slug'].casefold() == name.strip().casefold()]
 
+def search_wordpress_authors(query, connection):
+    query=str(query or '').strip()
+    if not query:
+        return []
+    params={'search':query,'context':'edit','per_page':100,'_fields':'id,name,slug,username,link'}
+    try:
+        users=wp_read(connection,'users',**params)
+    except WordPressError as error:
+        if error.status != 403:
+            raise
+        users=wp_read(connection,'users',search=query,who='authors',per_page=100,
+                      _fields='id,name,slug,username,link')
+    matches=[]
+    for user in users:
+        handle=str(user.get('username') or user.get('slug') or '').strip()
+        matches.append(dict(name=str(user.get('name') or '').strip(),handle=handle,
+                            wp_slug=str(user.get('slug') or '').strip(),
+                            url=str(user.get('link') or '').strip(),
+                            wp_user_id=user.get('id'),
+                            wp_site=connection['site']))
+    return matches
+
+def author_validation_errors(a):
+    errors=[]
+    for person in a.get('authors',[]):
+        name=str(person.get('name','')).strip()
+        if not name:
+            errors.append('Enter a name for each byline author, or remove the blank author row.')
+            continue
+        if person.get('byline_only'):
+            continue
+        slug=str(person.get('slug') or person.get('handle') or person.get('wp_slug') or '').strip()
+    return errors
+
 def prepare_issue(project, connection):
     pending = [a for a in project['articles'] if not a.get('wordpress_draft')]
     errors = []
+    linked=suggested=unresolved=0
+    for a in pending:
+        for person in a.get('authors',[]):
+            if person.get('byline_only') or person.get('handle') or person.get('wp_user_id'):
+                continue
+            name=str(person.get('name','')).strip()
+            if not name:
+                continue
+            matches=search_wordpress_authors(name,connection)
+            if len(matches)==1:
+                person.update(matches[0])
+                linked+=1
+            elif len(matches)>1:
+                person['handle']=''
+                unresolved+=1
+            else:
+                unresolved+=1
     missing_sections = [a for a in pending if a.get('source') == 'INDD' and 'source_section' not in a]
     if missing_sections:
         recipe = extraction_recipe(project.get('source_hash'))
@@ -309,16 +368,17 @@ def prepare_issue(project, connection):
         except (ValueError, OSError) as error:
             errors.append(str(error))
 
-    suggested = 0
+    suggested_count = 0
     for a in category_targets:
         section = a['source_section']
         if section in sections:
             a['categories'] = [sections[section]]
             a['suggested_category'] = sections[section]
             a['reviewed'] = False
-            suggested += 1
+            suggested_count += 1
     save(project)
-    return dict(project=project, suggested=suggested, warning=errors[0] if errors else '')
+    return dict(project=project, linked=linked, suggested=suggested_count,
+                unresolved=unresolved, warning=errors[0] if errors else '')
 
 def draft_article(project, aid, require_reviewed=True):
     article = next((a for a in project['articles'] if a['id'] == aid), None)
@@ -343,10 +403,19 @@ def draft_preflight(project, aid, connection, cache, require_reviewed=False):
     key = draft_key(connection['site'], project, a.get('native_key', aid))
     if a.get('wordpress_draft') or key in cache['history']:
         errors.append('This article was already sent or has an unresolved attempt. Check WordPress before retrying.')
-    if any(not str(author.get('name','')).strip() or not str(author.get('slug','')).strip()
-           for author in a.get('authors', [])):
-        errors.append('Enter both a name and WordPress author slug for each byline author, or remove the blank author row.')
+    for person in a.get('authors',[]):
+        if person.get('byline_only'):
+            continue
+        name=str(person.get('name','')).strip()
+        account=str(person.get('handle') or person.get('slug') or person.get('wp_slug') or '').strip()
+        if name and not account:
+            errors.append(f'Link {name} to a WordPress account or mark the byline for text-only use.')
+    errors.extend(author_validation_errors(a))
     payload = dict(title=title, content=post_text(a,connection['site']), status='draft', categories=[], tags=[])
+    selected_author=next((person for person in a.get('authors',[])
+                          if not person.get('byline_only') and person.get('wp_user_id')),None)
+    if selected_author:
+        payload['author']=selected_author['wp_user_id']
     if a.get('slug'):payload['slug']=a['slug']
     for kind in ('categories', 'tags'):
         for name in a.get(kind, []):
@@ -376,9 +445,9 @@ def draft_preflight(project, aid, connection, cache, require_reviewed=False):
 def create_draft(project,aid,connection,payload=None):
     a = draft_article(project, aid)
     if not a.get('title','').strip() or not a.get('body','').strip(): raise ValueError('Title and article text are required.')
-    if any(not str(author.get('name','')).strip() or not str(author.get('slug','')).strip()
-           for author in a.get('authors', [])):
-        raise ValueError('Enter both a name and WordPress author slug for each byline author, or remove the blank author row.')
+    author_errors=author_validation_errors(a)
+    if author_errors:
+        raise ValueError(' '.join(author_errors))
     base=connection['site'].rstrip('/'); user=connection['username']; password=connection['password']
     key=draft_key(base,project,a.get('native_key',aid))
     logpath=DATA/'wordpress-drafts.json'
@@ -388,6 +457,24 @@ def create_draft(project,aid,connection,payload=None):
         cats=terms(base,'categories',a.get('categories',[]),user,password)
         tags=terms(base,'tags',a.get('tags',[]),user,password)
         payload=dict(title=a['title'],content=post_text(a,base),status='draft',categories=cats,tags=tags)
+        selected_author=next(
+            (person for person in a.get('authors',[])
+             if not person.get('byline_only') and
+             (person.get('wp_user_id') or person.get('handle') or person.get('slug'))),
+            None,
+        )
+        if selected_author:
+            wp_user_id=selected_author.get('wp_user_id')
+            if not wp_user_id:
+                handle=str(selected_author.get('handle') or selected_author.get('slug') or '').strip()
+                users=wp_request(base,f'users?slug={urllib.parse.quote(handle,safe="")}&per_page=100',
+                                 user,password)
+                if not users or not isinstance(users,list):
+                    raise ValueError(f'The WordPress account for {selected_author.get("name","")} could not be verified.')
+                wp_user_id=users[0].get('id')
+            if not isinstance(wp_user_id,int) or isinstance(wp_user_id,bool) or wp_user_id<=0:
+                raise ValueError(f'The WordPress account for {selected_author.get("name","")} could not be verified.')
+            payload['author']=wp_user_id
     if a.get('slug'):payload['slug']=a['slug']
     # Persist intent before sending. A timeout must never silently produce duplicates.
     history[key]='attempt pending; inspect WordPress if the result is unknown'
