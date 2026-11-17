@@ -31,6 +31,7 @@ async function open(browser, viewport, project = fixture()) {
     if (pathname === '/api/issue') result = { project };
     else if (pathname === '/api/wordpress') result = { configured: true, site: 'https://example.org/news' };
     else if (pathname === '/api/taxonomy') result = { categories: [], tags: [] };
+    else if (pathname === '/api/prepare-issue') result = { project, suggested: 0 };
     else if (pathname === '/api/save') { project = data; result = {ok: true}; }
     else if (pathname === '/api/preflight') result = { site: 'https://example.org/news', checks: data.article_ids.map(id => {
       const article = project.articles.find(a => a.id === id);
