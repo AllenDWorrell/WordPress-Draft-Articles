@@ -1,0 +1,57 @@
+name: Browser CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright
+        run: npm install --no-save playwright@1.65.1
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Start workbench
+        run: |
+          python app.py --port 3000 > /tmp/workbench.log 2>&1 &
+          echo $! > /tmp/workbench.pid
+
+      - name: Wait for workbench
+        run: |
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error http://127.0.0.1:3000/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/workbench.log
+          exit 1
+
+      - name: Run browser tests
+        env:
+          PLAYWRIGHT_CHANNEL: chromium
+        run: node tests/redesign.browser.cjs
