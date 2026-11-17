@@ -154,7 +154,7 @@ $('filterReviewed').onclick=()=>setQueueFilter('reviewed');
 $('clearQueueFilters').onclick=()=>{queueQuery='';$('queueSearch').value='';setQueueFilter('all');$('queueSearch').focus();};
 $('previousArticle').onclick=()=>moveArticle(-1);
 $('nextArticle').onclick=()=>moveArticle(1);
-function renderEditor(){const a=current();$('importReview').hidden=!(a?.source==='INDD'&&!a.source_bytes_verified);$('editorForm').hidden=!a;$('emptyQueue').hidden=!!a;if(!a)return;$('categorySource').hidden=!a.source_section;$('categorySource').textContent=`InDesign section · ${a.source_section||''}`;$('title').value=a.title;renderBodyPreview();$('categories').value=a.categories.join(', ');$('tags').value=a.tags.join(', ');$('reviewed').checked=!!a.reviewed;$('autoTags').checked=a.auto_author_tags!==false;renderAuthors();renderInspector();}
+function renderEditor(){const a=current();$('importReview').hidden=a?.source!=='INDD';$('editorForm').hidden=!a;$('emptyQueue').hidden=!!a;if(!a)return;$('categorySource').hidden=!a.source_section;$('categorySource').textContent=`InDesign section · ${a.source_section||''}`;$('title').value=a.title;renderBodyPreview();$('categories').value=a.categories.join(', ');$('tags').value=a.tags.join(', ');$('reviewed').checked=!!a.reviewed;$('autoTags').checked=a.auto_author_tags!==false;renderAuthors();renderInspector();}
 function renderAuthors(){
     const article=current();
     article.authors??=[];

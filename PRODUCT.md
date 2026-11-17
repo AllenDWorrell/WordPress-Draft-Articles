@@ -39,8 +39,7 @@ The existing product name is The Current — WordPress Drafts. Its interface sup
 
 - `README.md` documents installation, local INDD import, author lookup, editable metadata, review, draft confirmation, persistence, and duplicate prevention.
 - `index.html`, `app.js`, and `style.css` contain the incumbent interface.
-- `app.py`, `indd_reader.py`, and `indd_text.py` implement the local server and import workflow.
-- `issue-recipes/current-vol37-issue4.json` is an existing issue-specific import recipe. The README records a verified Vol. 37, Issue 4 import with 15 article entries; this is not a guarantee for other files.
+- `app.py` and `indd_reader.py` implement the local server and general InDesign import workflow.
 - `tests/test_workbench.py` covers application behavior with WordPress writes mocked.
 
 ## Product Principles
