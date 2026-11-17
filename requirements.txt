@@ -1,1 +1,2 @@
-# No Python packages required. Requires Python 3.11 or newer and the bundled Windows INDD reader.
+# Requires Python 3.11 or newer and the bundled Windows INDD reader.
+keyring>=25.0,<26

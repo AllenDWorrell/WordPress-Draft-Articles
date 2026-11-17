@@ -25,6 +25,26 @@ class WorkbenchTests(unittest.TestCase):
         app.DATA=self.old
         assert Path(self.temp.name).resolve().is_relative_to(Path(__file__).resolve().parent)
         self.temp.cleanup()
+
+    def test_windows_keyring_credentials_are_stored_and_removed(self):
+        secrets={}
+        class FakeKeyring:
+            def set_password(self,service,key,value):secrets[(service,key)]=value
+            def get_password(self,service,key):return secrets.get((service,key))
+            def delete_password(self,service,key):
+                if (service,key) in secrets:
+                    del secrets[(service,key)]
+        fake=FakeKeyring()
+        import wordpress
+        with patch.object(wordpress,'keyring',fake):
+            wordpress.save_credentials('https://example.org','local-editor','abcd efgh')
+            status=wordpress.credential_status()
+            credentials=wordpress.get_credentials('https://example.org')
+            self.assertTrue(status['configured'])
+            self.assertEqual(credentials['username'],'local-editor')
+            self.assertEqual(credentials['password'],'abcd efgh')
+            wordpress.delete_credentials()
+            self.assertFalse(wordpress.credential_status()['configured'])
     def test_author_prefix_queries_wordpress_and_keeps_account_slug(self):
         user = dict(id=182, name='Allen Worrell', username='aw2362', slug='allen-worrell',
                     link='https://example.org/news/author/allen-worrell/')
