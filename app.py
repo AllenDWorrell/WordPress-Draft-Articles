@@ -7,6 +7,7 @@ from indd_reader import read_indd
 from wordpress import (WordPressError, load_settings, request as wp_request,
                        validate_site as validate_wordpress_site,
                        wordpress_ready)
+from storage import Repository
 
 ROOT=Path(__file__).resolve().parent
 DATA=ROOT/'native-data'
@@ -15,6 +16,15 @@ TOKEN=secrets.token_urlsafe(32)
 LOCK=threading.RLock()
 DEFAULT_PORT=3000
 DEFAULT_SITE='https://sites.nova.edu/mako-media-network'
+_REPOSITORY=None
+_REPOSITORY_ROOT=None
+
+def repository():
+    global _REPOSITORY,_REPOSITORY_ROOT
+    if _REPOSITORY is None or _REPOSITORY_ROOT != DATA:
+        _REPOSITORY=Repository(DATA)
+        _REPOSITORY_ROOT=DATA
+    return _REPOSITORY
 
 def content_security_policy():
     return ("default-src 'self'; img-src 'self'; style-src 'self'; "
@@ -33,7 +43,7 @@ def is_article(item):return item.get('kind','article')=='article'
 def folder(sid):
     if not re.fullmatch(r'[a-f0-9]{32}',sid or ''):raise ValueError('Invalid issue identifier.')
     path=DATA/sid
-    if not path.is_dir():raise ValueError('Issue not found.')
+    if not repository().issue_exists(sid) and not path.is_dir():raise ValueError('Issue not found.')
     return path
 def apply_default_tags(a):
     before=copy.deepcopy(a)
@@ -55,7 +65,10 @@ def apply_default_tags(a):
     return a!=before
 
 def load(sid):
-    project=json.loads((folder(sid)/'project.json').read_text('utf8'))
+    try:
+        project=repository().load_project(sid)
+    except ValueError:
+        project=json.loads((folder(sid)/'project.json').read_text('utf8'))
     changed=False
     excluded=[a for a in project['articles'] if not is_article(a)]
     if excluded:
@@ -112,7 +125,9 @@ def write_json(path, data):
     temp.replace(path)
 
 def save(project):
-    write_json(folder(project['id'])/'project.json', project)
+    folder(project['id']).mkdir(parents=True,exist_ok=True)
+    write_json(folder(project['id'])/'project.json',project)
+    repository().save_project(project)
 def save_edits(data):
     previous=load(data['id']);saved={a['id']:a for a in previous['articles']};edited=[]
     excluded_ids={a['id'] for a in previous.get('excluded_items',[])}
@@ -132,17 +147,25 @@ def article(title='Untitled article',author=''):
     return a
 
 def saved_projects():
+    projects=repository().saved_projects()
+    if projects:
+        yield from projects
+        return
     files = sorted(DATA.glob('*/project.json'), key=lambda path: path.stat().st_mtime, reverse=True)
     for file in files:
         yield json.loads(file.read_text('utf8'))
 
 def set_active_issue(issue_id):
+    repository().set_active_issue(issue_id)
     path = DATA / 'active-issue.json'
     temp = path.with_suffix('.tmp')
     temp.write_text(json.dumps(issue_id), 'utf8')
     temp.replace(path)
 
 def active_issue_id():
+    issue_id=repository().active_issue()
+    if issue_id:
+        return issue_id
     path = DATA / 'active-issue.json'
     if path.exists():
         return json.loads(path.read_text('utf8'))
@@ -330,7 +353,10 @@ def draft_article(project, aid, require_reviewed=True):
     return article
 
 def draft_history():
-    path = DATA/'wordpress-drafts.json'
+    history=repository().draft_history()
+    if history:
+        return history
+    path=DATA/'wordpress-drafts.json'
     return json.loads(path.read_text('utf8')) if path.exists() else {}
 
 def draft_preflight(project, aid, connection, cache, require_reviewed=False):
@@ -419,12 +445,14 @@ def create_draft(project,aid,connection,payload=None):
     if a.get('slug'):payload['slug']=a['slug']
     # Persist intent before sending. A timeout must never silently produce duplicates.
     history[key]='attempt pending; inspect WordPress if the result is unknown'
+    repository().set_draft(key,history[key])
     write_json(logpath, history)
     try:
         response=wp_request(base,'posts',user,password,payload)
     except WordPressError as error:
         if error.status in (400, 401, 403, 422):
             del history[key]
+            repository().delete_draft(key)
             write_json(logpath, history)
         raise
     if response.get('status')!='draft': raise ValueError('The server did not confirm draft status. Inspect WordPress immediately.')
@@ -432,7 +460,9 @@ def create_draft(project,aid,connection,payload=None):
         raise ValueError('The server did not confirm a valid draft ID. Inspect WordPress before retrying.')
     record=dict(id=response['id'],status='draft',site=base,edit_url=draft_edit_url(base,response['id']),
                 source_hash=project.get('source_hash',''),native_key=a.get('native_key',aid))
-    history[key]=record;write_json(logpath, history)
+    history[key]=record
+    repository().set_draft(key,record)
+    write_json(logpath, history)
     a['wordpress_draft']=record.copy();save(project)
     return dict(id=response['id'],status=response['status'],edit_url=record['edit_url'],project=project,
                 note='Check the Authors panel manually. Core REST does not assign multiple coauthors.')
