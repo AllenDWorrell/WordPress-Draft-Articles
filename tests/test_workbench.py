@@ -136,6 +136,19 @@ class WorkbenchTests(unittest.TestCase):
         with patch.object(app,'wp_request',return_value=dict(id=77,status='pending')):
             with self.assertRaisesRegex(ValueError,'did not confirm draft'):app.create_draft(self.p,self.a['id'],self.c)
         self.assertNotIn('wordpress_draft',app.load(self.sid)['articles'][0])
+
+    def test_reconcile_unresolved_draft_requires_exactly_one_match(self):
+        self.a.update(reviewed=True,native_key='1')
+        key=app.draft_key(self.c['site'],self.p,'1')
+        app.repository().set_draft(key,dict(state='unresolved',status='unknown',
+                                           source_hash='abc',native_key='1',title=self.a['title']))
+        with patch.object(app,'wp_read',return_value=[
+            dict(id=81,title={'raw':self.a['title']},status='draft')
+        ]):
+            record=app.reconcile_draft(self.p,self.a['id'],self.c)
+        self.assertEqual(record['state'],'confirmed')
+        self.assertEqual(record['id'],81)
+        self.assertEqual(app.load(self.sid)['articles'][0]['wordpress_draft']['id'],81)
     def test_existing_draft_ids_backfill_but_pending_attempts_do_not(self):
         key=app.draft_key(app.DEFAULT_SITE,self.p,self.a['id'])
         path=app.DATA/'wordpress-drafts.json'

@@ -1,6 +1,6 @@
 """The Current: INDD workbench for WordPress drafts."""
 import argparse,copy,hashlib,html,json,mimetypes,re,secrets,threading,unicodedata
-import urllib.parse,uuid,webbrowser
+import urllib.error,urllib.parse,uuid,webbrowser
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
 from indd_reader import read_indd
@@ -96,7 +96,12 @@ def load(sid):
             changed=True
         changed=apply_default_tags(a) or changed
     logpath=DATA/'wordpress-drafts.json'
-    history=json.loads(logpath.read_text('utf8')) if logpath.exists() else {}
+    history=repository().draft_history()
+    if logpath.exists():
+        try:
+            history.update(json.loads(logpath.read_text('utf8')))
+        except json.JSONDecodeError:
+            pass
     for a in project['articles']:
         if a.get('wordpress_draft'):continue
         identity=a.get('native_key',a['id'])
@@ -106,7 +111,11 @@ def load(sid):
         if isinstance(legacy,int) and not isinstance(legacy,bool) and legacy>0:
             record=dict(id=legacy,status='draft',site=DEFAULT_SITE,edit_url=draft_edit_url(DEFAULT_SITE,legacy))
         for candidate in history.values():
-            if isinstance(candidate,dict) and candidate.get('status')=='draft' and candidate.get('source_hash')==project.get('source_hash','') and candidate.get('native_key')==identity:
+            if (isinstance(candidate,dict) and
+                candidate.get('state','confirmed')=='confirmed' and
+                candidate.get('status')=='draft' and
+                candidate.get('source_hash')==project.get('source_hash','') and
+                candidate.get('native_key')==identity):
                 record=candidate;break
         if record:
             a['wordpress_draft']=record.copy();changed=True
@@ -352,6 +361,54 @@ def draft_article(project, aid, require_reviewed=True):
         raise ValueError('Review this article before creating a draft.')
     return article
 
+def draft_state_text(value):
+    if isinstance(value,dict):
+        state=value.get('state')
+        if state=='failed':
+            return 'failed'
+        if state=='unresolved':
+            return 'unresolved'
+        if state=='pending' or state=='submitted':
+            return 'pending'
+        if state=='confirmed' or value.get('status')=='draft':
+            return 'confirmed'
+    if isinstance(value,int) and not isinstance(value,bool):
+        return 'confirmed'
+    return 'unresolved'
+
+def reconcile_draft(project,aid,connection):
+    a=draft_article(project,aid,require_reviewed=False)
+    identity=a.get('native_key',aid)
+    key=draft_key(connection['site'],project,identity)
+    history=draft_history()
+    value=history.get(key)
+    if not value:
+        raise ValueError('This article has no draft attempt to reconcile.')
+    state=draft_state_text(value)
+    if state=='confirmed':
+        return dict(state='confirmed',record=value if isinstance(value,dict) else None)
+    title=a.get('title','').strip()
+    posts=wp_read(connection,'posts',search=title,search_columns='post_title',context='edit',
+                  status='publish,draft,pending,future,private',per_page=100,_fields='id,title,status')
+    matches=[]
+    for post in posts:
+        existing=post.get('title',{})
+        existing=existing.get('raw') or existing.get('rendered','')
+        if normalized_name(existing)==normalized_name(title):
+            matches.append(post)
+    if len(matches)!=1:
+        record=dict(state='unresolved',title=title,matches=[post['id'] for post in matches])
+        repository().set_draft(key,record)
+        return record
+    post=matches[0]
+    record=dict(id=post['id'],status='draft',state='confirmed',site=connection['site'],
+                edit_url=draft_edit_url(connection['site'],post['id']),
+                source_hash=project.get('source_hash',''),native_key=identity)
+    repository().set_draft(key,record)
+    a['wordpress_draft']=record.copy()
+    save(project)
+    return record
+
 def draft_history():
     history=repository().draft_history()
     if history:
@@ -444,21 +501,44 @@ def create_draft(project,aid,connection,payload=None):
             payload['author']=wp_user_id
     if a.get('slug'):payload['slug']=a['slug']
     # Persist intent before sending. A timeout must never silently produce duplicates.
-    history[key]='attempt pending; inspect WordPress if the result is unknown'
-    repository().set_draft(key,history[key])
+    signature=hashlib.sha256(json.dumps(payload,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
+    pending=dict(state='pending',status='pending',signature=signature,
+                 title=a.get('title',''),source_hash=project.get('source_hash',''),
+                 native_key=a.get('native_key',aid))
+    history[key]=pending
+    repository().set_draft(key,pending)
     write_json(logpath, history)
     try:
         response=wp_request(base,'posts',user,password,payload)
+    except (TimeoutError,urllib.error.URLError,ConnectionError,OSError) as error:
+        unresolved=dict(state='unresolved',status='unknown',title=a.get('title',''),
+                        source_hash=project.get('source_hash',''),native_key=a.get('native_key',aid),
+                        error=str(error))
+        history[key]=unresolved
+        repository().set_draft(key,unresolved)
+        write_json(logpath,history)
+        raise TimeoutError('The WordPress result is unresolved. Inspect WordPress before retrying.') from None
     except WordPressError as error:
         if error.status in (400, 401, 403, 422):
             del history[key]
             repository().delete_draft(key)
             write_json(logpath, history)
         raise
-    if response.get('status')!='draft': raise ValueError('The server did not confirm draft status. Inspect WordPress immediately.')
+    if response.get('status')!='draft':
+        unresolved=dict(state='unresolved',status=response.get('status','unknown'),title=a.get('title',''),
+                        source_hash=project.get('source_hash',''),native_key=a.get('native_key',aid))
+        history[key]=unresolved
+        repository().set_draft(key,unresolved)
+        write_json(logpath,history)
+        raise ValueError('The server did not confirm draft status. Inspect WordPress immediately.')
     if not isinstance(response.get('id'),int) or isinstance(response['id'],bool) or response['id']<=0:
+        unresolved=dict(state='unresolved',status='unknown',title=a.get('title',''),
+                        source_hash=project.get('source_hash',''),native_key=a.get('native_key',aid))
+        history[key]=unresolved
+        repository().set_draft(key,unresolved)
+        write_json(logpath,history)
         raise ValueError('The server did not confirm a valid draft ID. Inspect WordPress before retrying.')
-    record=dict(id=response['id'],status='draft',site=base,edit_url=draft_edit_url(base,response['id']),
+    record=dict(id=response['id'],status='draft',state='confirmed',site=base,edit_url=draft_edit_url(base,response['id']),
                 source_hash=project.get('source_hash',''),native_key=a.get('native_key',aid))
     history[key]=record
     repository().set_draft(key,record)
