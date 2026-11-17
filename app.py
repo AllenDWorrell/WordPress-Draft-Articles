@@ -1,10 +1,13 @@
 """The Current: INDD workbench for WordPress drafts."""
-import argparse,base64,copy,hashlib,html,json,mimetypes,re,secrets,threading
-import urllib.error,urllib.parse,urllib.request,uuid,webbrowser
+import argparse,copy,hashlib,html,json,mimetypes,re,secrets,threading
+import urllib.parse,uuid,webbrowser
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
 from indd_text import extract_issue,author_slug
 from indd_reader import read_indd
+from wordpress import (WordPressError, load_settings, request as wp_request,
+                       validate_site as validate_wordpress_site,
+                       wordpress_ready)
 
 ROOT=Path(__file__).resolve().parent
 DATA=ROOT/'native-data'
@@ -19,27 +22,7 @@ def content_security_policy():
             "script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'")
 
 def wordpress_settings():
-    fields = {'WP_SITE': 'site', 'WP_USERNAME': 'username', 'WP_APPLICATION_PASSWORD': 'password'}
-    settings = dict(site=DEFAULT_SITE, username='', password='')
-    try:
-        lines = (ROOT / '.env').read_text(encoding='utf-8-sig').splitlines()
-    except FileNotFoundError:
-        return settings
-    except (OSError, UnicodeError):
-        raise ValueError('Could not read .env. Save it as a UTF-8 text file beside app.py.') from None
-    for line in lines:
-        key, separator, value = line.partition('=')
-        key = key.strip()
-        if separator and key in fields:
-            value = value.strip()
-            if len(value) >= 2 and value[0] in ('"', "'") and value[-1] == value[0]:
-                value = value[1:-1].strip()
-            settings[fields[key]] = value
-    settings['site'] = (settings['site'] or DEFAULT_SITE).rstrip('/')
-    return settings
-
-def wordpress_ready(settings):
-    return bool(settings['username'] and settings['password'].replace(' ', ''))
+    return load_settings(ROOT,DEFAULT_SITE)
 
 def uid():return uuid.uuid4().hex
 
@@ -226,42 +209,6 @@ def post_text(a, site=''):
     if body:
         paragraphs.extend('\n'.join(part.split('\n')) for part in re.split(r'\n\s*\n',body) if part.strip())
     return '\n\n'.join(paragraphs)
-
-class NoRedirect(urllib.request.HTTPRedirectHandler):
-    def redirect_request(self,*args,**kwargs):
-        raise ValueError('WordPress redirected the request. Use the final HTTPS site address; credentials were not forwarded.')
-
-class WordPressError(ValueError):
-    def __init__(self, status, message):
-        self.status = status
-        super().__init__(f'WordPress returned {status}: {message}')
-
-def validate_wordpress_site(site):
-    try:
-        parsed = urllib.parse.urlsplit(site)
-        valid = (parsed.scheme == 'https' and parsed.hostname and parsed.username is None
-                 and parsed.password is None and not re.search(r'[\s\\?#]', site))
-        parsed.port  # Reject invalid or out-of-range ports.
-    except ValueError:
-        valid = False
-    if not valid:
-        raise ValueError('Set WP_SITE in .env to an HTTPS site URL without login details, a query, or a fragment.')
-
-def wp_request(base,path,username,password,payload=None,content_type='application/json',filename=None):
-    validate_wordpress_site(base)
-    if not username or not password.replace(' ', ''):
-        raise ValueError('Fill in WP_USERNAME and WP_APPLICATION_PASSWORD in the .env file beside app.py.')
-    url=base.rstrip('/')+'/wp-json/wp/v2/'+path
-    auth=base64.b64encode((username+':'+password.replace(' ','')).encode()).decode()
-    headers={'Authorization':'Basic '+auth,'Content-Type':content_type,'User-Agent':'CurrentDraftWorkbench/1.0'}
-    if filename:headers['Content-Disposition']='attachment; filename="'+filename+'"'
-    req=urllib.request.Request(url,data=payload if isinstance(payload,bytes) else json.dumps(payload).encode() if payload is not None else None,headers=headers)
-    try:
-        with urllib.request.build_opener(NoRedirect).open(req,timeout=30) as resp: return json.load(resp)
-    except urllib.error.HTTPError as err:
-        try: message=json.load(err).get('message','Request rejected.')
-        except Exception: message='Request rejected.'
-        raise WordPressError(err.code, message) from None
 
 def terms(base,kind,names,user,password):
     result=[]
