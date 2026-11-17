@@ -1,0 +1,47 @@
+name: Markup and Style CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  markup-style:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check HTML and CSS structure
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          class StrictEnoughParser(HTMLParser):
+              def error(self, message):
+                  raise ValueError(message)
+
+          html = Path("index.html").read_text(encoding="utf-8")
+          parser = StrictEnoughParser()
+          parser.feed(html)
+          parser.close()
+
+          css = Path("style.css").read_text(encoding="utf-8")
+          if css.count("{") != css.count("}"):
+              raise ValueError("Unbalanced CSS braces")
+          if css.count("/*") != css.count("*/"):
+              raise ValueError("Unterminated CSS comment")
+
+          print("HTML parsed and CSS structure checks passed")
+          PY
