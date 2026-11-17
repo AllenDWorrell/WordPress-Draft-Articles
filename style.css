@@ -329,6 +329,12 @@ dialog a { color:var(--accent); text-underline-offset:.18em; }
 
 .review-section>.review{text-transform:none;letter-spacing:0;}
 
+#wordpressDialog{width:min(520px,calc(100vw - 32px));padding:24px;}
+#wordpressDialog>label{display:block;margin-top:12px;font-size:12px;font-weight:600;}
+#wordpressDialog>input{width:100%;height:40px;margin-top:6px;padding:8px;}
+.settings-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+#wordpressSettingsResult{min-height:20px;margin:12px 0 0;font-size:12px;}
+
 @font-face {
   font-family: 'JetBrains Mono';
   font-style: normal;
@@ -350,4 +356,3 @@ dialog a { color:var(--accent); text-underline-offset:.18em; }
   font-display: swap;
   src: url(/fonts/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8FqtjPQ.ttf) format('truetype');
 }
-
