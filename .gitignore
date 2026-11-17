@@ -17,3 +17,4 @@ __pycache__/
 .impeccable/
 .vscode/
 .venv/
+tests/tmp*/

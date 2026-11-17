@@ -20,6 +20,8 @@ class WorkbenchTests(unittest.TestCase):
         self.c=dict(site='https://example.org/news',username='editor',password='applicationpassword')
         app.save(self.p)
     def tearDown(self):
+        app._REPOSITORY=None
+        app._REPOSITORY_ROOT=None
         app.DATA=self.old
         assert Path(self.temp.name).resolve().is_relative_to(Path(__file__).resolve().parent)
         self.temp.cleanup()
@@ -345,6 +347,15 @@ class WorkbenchTests(unittest.TestCase):
         empty_id='b'*32;(app.DATA/empty_id).mkdir()
         app.save(dict(id=empty_id,name='Empty issue',articles=[]))
         self.assertEqual(app.active_issue_id(), self.sid)
+
+    def test_json_project_is_migrated_to_sqlite(self):
+        json_project=copy.deepcopy(self.p)
+        json_project['name']='Migrated issue'
+        app.save(json_project)
+        app._REPOSITORY=None
+        app._REPOSITORY_ROOT=None
+        migrated=app.repository().load_project(self.sid)
+        self.assertEqual(migrated['name'],'Migrated issue')
 
     def test_single_indd_close_and_reopen(self):
         raw = b'known INDD bytes'
