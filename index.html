@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="workbench-token" content="__TOKEN__">
+  <title>The Current — WordPress Drafts</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-context"><span id="issueName" class="issue-filename">The Current</span></div>
+    <div class="header-actions"><button id="closeIssue" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>CLOSE ISSUE</button></div>
+  </header>
+  <div id="notice" role="status" hidden></div>
+  <section id="welcome" class="welcome" hidden>
+    <div class="welcome-intro">
+      <h1>One issue.<br>A clear path to draft.</h1>
+      <p>Bring your finished InDesign issue into a workspace built for the next step: checking the story, linking the byline, and preparing WordPress drafts.</p>
+      <p class="welcome-note">Your edits stay saved on this computer. Nothing is published.</p>
+    </div>
+    <div class="import-panel">
+      <h2>Open your issue</h2>
+      <p>Select an INDD file to recover its articles. Reopening the same issue resumes your saved review.</p>
+      <label for="upload">InDesign issue</label>
+      <input id="upload" class="file-picker" type="file" accept=".indd" aria-describedby="uploadHelp">
+      <p id="uploadHelp" class="help">.indd files · Adobe InDesign is not required</p>
+      <ol class="import-steps"><li>Recover the issue’s articles</li><li>Check text, authors, and metadata</li><li>Confirm WordPress drafts</li></ol>
+    </div>
+  </section>
+  <main id="workspace" hidden>
+    <aside class="issue-queue" aria-label="Article review queue">
+      <div class="issue-heading" hidden><h1>Issue queue</h1><p id="progress" role="status"></p></div>
+      <div class="queue-tools">
+        <label class="search-field" for="queueSearch"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="queueSearch" type="search" placeholder="Filter articles..." aria-label="Find an article by headline or author"></label>
+        <div class="queue-filters" role="group" aria-label="Filter articles">
+          <button id="filterAll" aria-pressed="true">All <span id="queueAllCount">0</span></button>
+          <button id="filterNeeds" aria-pressed="false">Needs review <span id="queueNeedsCount">0</span></button>
+          <button id="filterReviewed" aria-pressed="false">Reviewed <span id="queueReviewedCount">0</span></button>
+        </div>
+        <p id="queueCount" class="queue-count" hidden></p>
+      </div>
+      <nav id="articleList" aria-label="Articles"></nav>
+      <div id="queueEmpty" class="queue-empty" hidden><p>No matching articles.</p><button id="clearQueueFilters">Clear filters</button></div>
+      <div class="queue-actions"><button id="newArticle">ADD ARTICLE</button><button id="batchDraft" hidden disabled>Create reviewed drafts</button></div>
+    </aside>
+    <section class="editor-panel" aria-label="Article editor">
+      <div class="editor-toolbar">
+        <div class="editor-location"><span id="articlePosition"></span></div>
+        <div class="toolbar-actions"><span id="saveState" class="sr-only" role="status">Saved locally</span><div class="article-navigation" role="group" aria-label="Move through filtered articles"><button id="previousArticle" aria-label="Previous article"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg>PREV</button><button id="nextArticle" aria-label="Next article"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>NEXT</button></div></div>
+      </div>
+      <div id="emptyQueue" class="empty-state" hidden><h2>All caught up.</h2><p>No articles remain in review. You can add an article or close this issue.</p></div>
+      <div id="editorForm">
+        <div class="article-copy">
+          <div class="copy-heading" hidden><span id="articleStatus" class="review-badge">NEEDS REVIEW</span><span id="wordCount" class="help"></span></div>
+          <label class="headline-field" for="title"><span class="sr-only">Article headline</span><input id="title" placeholder="Article Headline"></label>
+          <p class="sr-only import-warning" id="importReview" hidden>Check this recovered text against the finished issue. Verify the headline, byline, story order, and ending.</p>
+          <div class="body-heading" hidden><label for="bodySource">Article text</label><span class="help">Click the article to edit its HTML.</span></div>
+          <div class="proof-stage"><div id="bodyPreview" class="body-preview" role="button" tabindex="0" aria-label="Article preview. Click to edit HTML."></div><textarea id="bodySource" aria-label="Article HTML source" rows="24" placeholder="Article HTML" hidden></textarea></div>
+          <p class="copy-footnote" hidden>Check the final paragraph against the issue before marking this article reviewed.</p>
+        </div>
+        <div class="article-details">
+          <h2 class="inspector-title">WP Metadata Inspector</h2>
+          <div class="inspector-fields">
+          <section class="detail-section" aria-labelledby="authorsHeading">
+            <h2 id="authorsHeading">Article Byline</h2>
+            <div class="author-summary"><span id="authorAvatar"></span><strong id="authorDisplay"></strong></div>
+            <div id="authorEditor"><button id="addAuthor" class="text-button" type="button">Add author</button><div id="authors" role="group" aria-labelledby="authorsHeading"></div></div>
+          </section>
+          <section class="detail-section metadata" aria-labelledby="metadataHeading">
+            <h2 id="metadataHeading">WordPress Category</h2><div id="categoryPills" class="pills"></div>
+            <div class="advanced"><label for="categories">Other categories<input id="categories"></label><p id="categoryHelp" class="help">Separate existing categories with commas.</p><p id="categorySource" hidden></p></div>
+          </section>
+          <section class="detail-section"><h2>Tags</h2><div id="tagChips" class="pills"></div><input id="tagEntry" aria-label="Add tag" placeholder="Add tag and press Enter...">
+            <p class="suggestion-label">Suggested from text:</p><div id="tagSuggestions" class="pills"></div>
+            <div class="advanced"><label for="tags">Other tags<input id="tags"></label><p id="tagHelp" class="help">Separate tags with commas.</p><label class="inline-check"><input id="autoTags" type="checkbox" checked>Generate coauthor tags</label></div>
+          </section>
+          <section class="detail-section"><label for="slugField">WordPress Slug</label><input id="slugField" placeholder="Generated from headline"></section>
+          </div>
+          <section class="detail-section review-section" aria-labelledby="reviewHeading">
+            <h2 id="reviewHeading" class="sr-only">Article review</h2>
+            <label class="review"><input id="reviewed" type="checkbox"><span><strong>Mark article as reviewed</strong><small>Verified against print issue.</small></span></label>
+            <div class="editor-actions"><button id="checkArticle" hidden>Check article</button><button id="draftBtn" class="primary"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8V4h14v4M12 20V8m-5 5 5-5 5 5"/></svg>PUSH TO WORDPRESS DRAFT</button></div>
+            
+            <button id="removeArticle" class="text-button danger" hidden>Remove from review</button>
+          </section>
+        </div>
+      </div>
+    </section>
+  </main>
+  <dialog id="draftDialog" aria-labelledby="draftHeading">
+    <form method="dialog"><button id="closeDraftDialog" class="dialog-close" aria-label="Close draft check">Close</button></form>
+    <h2 id="draftHeading">WordPress draft check</h2><p id="draftSummary"></p><div id="draftChecks"></div>
+    <label id="duplicateOption" class="inline-check" hidden><input id="includeDuplicate" type="checkbox">Create a separate draft for this article anyway</label>
+    <button id="confirmDraft" class="primary" hidden>Create draft</button><div id="draftResult" role="status"></div>
+  </dialog>
+  <div id="busy" tabindex="-1" role="status" aria-live="polite" hidden><div class="busy-indicator" aria-hidden="true"></div><strong id="busyText">Working…</strong><span>Your issue stays on this computer.</span></div>
+</body>
+</html>

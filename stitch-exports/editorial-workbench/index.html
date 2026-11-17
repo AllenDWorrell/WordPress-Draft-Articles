@@ -1,0 +1,827 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"secondary-fixed-dim":"#bac7dd","on-background":"#161c21","on-tertiary-fixed":"#331200","secondary":"#535f72","primary-container":"#008375","outline":"#6e7a76","on-surface":"#161c21","surface-container-low":"#eef4fb","on-error":"#ffffff","on-error-container":"#93000a","error-container":"#ffdad6","on-tertiary":"#ffffff","surface-tint":"#006b5f","on-secondary-fixed":"#0f1c2c","on-secondary":"#ffffff","on-tertiary-container":"#fffbff","on-primary":"#ffffff","tertiary-fixed-dim":"#ffb68e","on-surface-variant":"#3e4946","surface-dim":"#d4dbe2","background":"#f6faff","tertiary-fixed":"#ffdbca","primary-fixed":"#91f4e3","surface-container-high":"#e2e9f0","inverse-primary":"#74d7c7","secondary-container":"#d6e3fa","tertiary-container":"#bb5810","on-primary-container":"#f2fffb","on-tertiary-fixed-variant":"#763300","primary-fixed-dim":"#74d7c7","primary":"#00685c","surface-bright":"#f6faff","surface":"#f6faff","surface-container":"#e8eff6","surface-container-lowest":"#ffffff","on-secondary-container":"#596578","tertiary":"#984300","outline-variant":"#bdc9c5","inverse-surface":"#2a3137","surface-container-highest":"#dde3ea","on-primary-fixed-variant":"#005047","on-primary-fixed":"#00201c","on-secondary-fixed-variant":"#3b4859","surface-variant":"#dde3ea","error":"#ba1a1a","inverse-on-surface":"#ebf1f9","secondary-fixed":"#d6e3fa"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{"margin-desktop":"2rem","margin":"1rem","gutter-desktop":"1.5rem","space-xl":"2rem","space-sm":"0.5rem","gutter":"1rem","space-md":"0.75rem","space-lg":"1.25rem","space-xs":"0.25rem"},fontFamily:{"headline-xl-mobile":["Newsreader"],"code-mono":["JetBrains Mono"],"headline-sm":["Newsreader"],"body-md":["Inter"],"label-sm":["Inter"],"body-sm":["Inter"],"headline-md":["Newsreader"],"headline-xl":["Newsreader"],"body-lg":["Inter"],"article-body":["Newsreader"],"headline-lg":["Newsreader"],"label-md":["Inter"]},fontSize:{"headline-xl-mobile":["28px",{lineHeight:"34px",letterSpacing:"-0.015em",fontWeight:"600"}],"code-mono":["12px",{lineHeight:"16px",fontWeight:"400"}],"headline-sm":["16px",{lineHeight:"22px",fontWeight:"600"}],"body-md":["13px",{lineHeight:"18px",fontWeight:"400"}],"label-sm":["11px",{lineHeight:"14px",letterSpacing:"0.04em",fontWeight:"600"}],"body-sm":["12px",{lineHeight:"16px",fontWeight:"400"}],"headline-md":["20px",{lineHeight:"26px",letterSpacing:"-0.005em",fontWeight:"500"}],"headline-xl":["36px",{lineHeight:"44px",letterSpacing:"-0.02em",fontWeight:"600"}],"body-lg":["15px",{lineHeight:"22px",fontWeight:"400"}],"article-body":["17px",{lineHeight:"28px",letterSpacing:"-0.003em",fontWeight:"400"}],"headline-lg":["26px",{lineHeight:"32px",letterSpacing:"-0.01em",fontWeight:"600"}],"label-md":["12px",{lineHeight:"16px",letterSpacing:"0.02em",fontWeight:"600"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 h-14 bg-surface-container-lowest border-b border-surface-container-high"><div class="h-14 w-full px-space-md flex items-center justify-between"><div class="flex items-center gap-space-md"><span class="hidden sm:inline-block font-code-mono text-code-mono text-secondary">Vol37_Issue04_Master.indd</span></div><div class="flex items-center gap-space-md"><button class="h-8 px-space-md border border-outline-variant hover:bg-surface-container text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm flex items-center gap-1.5 transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">close</span><span>CLOSE ISSUE</span></button></div></div></header><div><main class="relative pt-14 bg-surface min-h-screen"><div class="flex flex-col w-full">
+<!-- Top Utility Sub-Header / Run Sheet Context Bar -->
+<!-- 3-Pane Workstation Grid (Strict 1px Structural Rules, Zero Blur, Zero Slop) -->
+<div class="w-full grid grid-cols-1 lg:grid-cols-12 min-h-[calc(100vh-3.5rem)] divide-y lg:divide-y-0 lg:divide-x divide-surface-container-high bg-surface">
+<!-- PANE 1: ISSUE QUEUE & BATCH SLATE (3 Cols Desktop) -->
+<div class="lg:col-span-3 flex flex-col bg-surface-container-low">
+<!-- Queue Filter Header -->
+<div class="p-space-sm border-b border-surface-container-high bg-surface-container-low space-y-space-xs">
+<div class="relative w-full">
+<input class="w-full h-8 pl-7 pr-space-xs bg-surface-container-lowest border border-outline-variant text-on-surface font-body-sm text-body-sm rounded-none focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="article-search" placeholder="Filter articles..." type="text">
+<span class="material-symbols-outlined absolute left-1.5 top-1.5 text-secondary text-[16px]">search</span>
+</div>
+<!-- Filter Segment Bar -->
+<div class="flex items-center gap-1 font-label-sm text-label-sm pt-0.5" id="filter-pills-bar">
+<button class="filter-btn px-2 py-1 bg-surface-container-lowest text-primary font-bold border border-outline-variant" data-filter="all" type="button">All <span id="count-all">(7)</span></button>
+<button class="filter-btn px-2 py-1 text-on-surface-variant hover:text-on-surface hover:bg-surface-container" data-filter="needs_review" type="button">
+            Needs review <span id="count-needs">(6)</span>
+</button>
+<button class="filter-btn px-2 py-1 text-on-surface-variant hover:text-on-surface hover:bg-surface-container" data-filter="reviewed" type="button">
+            Reviewed <span id="count-reviewed">(1)</span>
+</button>
+</div>
+</div>
+<!-- Articles Slate List -->
+<div class="flex-1 overflow-y-auto divide-y divide-surface-container-high bg-surface-container-low" id="articles-queue"><article class="p-space-sm cursor-pointer transition-colors border-l-4 bg-surface-container-lowest border-l-primary">
+          <div class="flex items-center justify-between gap-space-xs mb-1">
+            <span class="inline-flex items-center px-1.5 py-0.5 font-label-sm text-[10px] tracking-wider uppercase font-semibold bg-[#fee2e2] text-[#991b1b] border border-[#fca5a5]">Needs Review</span>
+            <span class="font-code-mono text-code-mono text-secondary">Page 3</span>
+          </div>
+          <h2 class="font-headline-sm text-headline-sm text-on-surface leading-tight hover:text-primary mb-1 line-clamp-2">
+            NSU Hosts Razor’s Boo Bash For The Community
+          </h2>
+          <div class="flex items-center justify-between font-label-sm text-label-sm text-secondary pt-1">
+            <span class="text-on-surface-variant font-medium">Sara Hereira</span>
+            <span class="font-code-mono">286 wds</span>
+          </div>
+        </article><article class="p-space-sm cursor-pointer transition-colors border-l-4 hover:bg-surface-container-lowest border-l-transparent">
+          <div class="flex items-center justify-between gap-space-xs mb-1">
+            <span class="inline-flex items-center px-1.5 py-0.5 font-label-sm text-[10px] tracking-wider uppercase font-semibold bg-[#dcfce7] text-[#166534] border border-[#86efac]">Reviewed</span>
+            <span class="font-code-mono text-code-mono text-secondary">Page 1</span>
+          </div>
+          <h2 class="font-headline-sm text-headline-sm text-on-surface leading-tight hover:text-primary mb-1 line-clamp-2">
+            Student Government passes historic resolution on dining hall wages
+          </h2>
+          <div class="flex items-center justify-between font-label-sm text-label-sm text-secondary pt-1">
+            <span class="text-on-surface-variant font-medium">Elena Vance</span>
+            <span class="font-code-mono">412 wds</span>
+          </div>
+        </article><article class="p-space-sm cursor-pointer transition-colors border-l-4 hover:bg-surface-container-lowest border-l-transparent">
+          <div class="flex items-center justify-between gap-space-xs mb-1">
+            <span class="inline-flex items-center px-1.5 py-0.5 font-label-sm text-[10px] tracking-wider uppercase font-semibold bg-[#fee2e2] text-[#991b1b] border border-[#fca5a5]">Needs Review</span>
+            <span class="font-code-mono text-code-mono text-secondary">Page 4</span>
+          </div>
+          <h2 class="font-headline-sm text-headline-sm text-on-surface leading-tight hover:text-primary mb-1 line-clamp-2">
+            Fort Lauderdale downtown rail corridor construction delayed through spring
+          </h2>
+          <div class="flex items-center justify-between font-label-sm text-label-sm text-secondary pt-1">
+            <span class="text-on-surface-variant font-medium">Marcus Thorne</span>
+            <span class="font-code-mono">350 wds</span>
+          </div>
+        </article><article class="p-space-sm cursor-pointer transition-colors border-l-4 hover:bg-surface-container-lowest border-l-transparent">
+          <div class="flex items-center justify-between gap-space-xs mb-1">
+            <span class="inline-flex items-center px-1.5 py-0.5 font-label-sm text-[10px] tracking-wider uppercase font-semibold bg-[#fee2e2] text-[#991b1b] border border-[#fca5a5]">Needs Review</span>
+            <span class="font-code-mono text-code-mono text-secondary">Page 8</span>
+          </div>
+          <h2 class="font-headline-sm text-headline-sm text-on-surface leading-tight hover:text-primary mb-1 line-clamp-2">
+            Gallery 217 showcases student prints capturing vanishing coastal architecture
+          </h2>
+          <div class="flex items-center justify-between font-label-sm text-label-sm text-secondary pt-1">
+            <span class="text-on-surface-variant font-medium">Maya Lin</span>
+            <span class="font-code-mono">320 wds</span>
+          </div>
+        </article><article class="p-space-sm cursor-pointer transition-colors border-l-4 hover:bg-surface-container-lowest border-l-transparent">
+          <div class="flex items-center justify-between gap-space-xs mb-1">
+            <span class="inline-flex items-center px-1.5 py-0.5 font-label-sm text-[10px] tracking-wider uppercase font-semibold bg-[#fee2e2] text-[#991b1b] border border-[#fca5a5]">Needs Review</span>
+            <span class="font-code-mono text-code-mono text-secondary">Page 10</span>
+          </div>
+          <h2 class="font-headline-sm text-headline-sm text-on-surface leading-tight hover:text-primary mb-1 line-clamp-2">
+            Editorial: Automated plagiarism detectors are failing students and educators alike
+          </h2>
+          <div class="flex items-center justify-between font-label-sm text-label-sm text-secondary pt-1">
+            <span class="text-on-surface-variant font-medium">Staff Editorial Board</span>
+            <span class="font-code-mono">580 wds</span>
+          </div>
+        </article><article class="p-space-sm cursor-pointer transition-colors border-l-4 hover:bg-surface-container-lowest border-l-transparent">
+          <div class="flex items-center justify-between gap-space-xs mb-1">
+            <span class="inline-flex items-center px-1.5 py-0.5 font-label-sm text-[10px] tracking-wider uppercase font-semibold bg-[#fee2e2] text-[#991b1b] border border-[#fca5a5]">Needs Review</span>
+            <span class="font-code-mono text-code-mono text-secondary">Page 12</span>
+          </div>
+          <h2 class="font-headline-sm text-headline-sm text-on-surface leading-tight hover:text-primary mb-1 line-clamp-2">
+            Women's volleyball secures Sunshine State Conference tournament berth
+          </h2>
+          <div class="flex items-center justify-between font-label-sm text-label-sm text-secondary pt-1">
+            <span class="text-on-surface-variant font-medium">Jordan Moon</span>
+            <span class="font-code-mono">295 wds</span>
+          </div>
+        </article><article class="p-space-sm cursor-pointer transition-colors border-l-4 hover:bg-surface-container-lowest border-l-transparent">
+          <div class="flex items-center justify-between gap-space-xs mb-1">
+            <span class="inline-flex items-center px-1.5 py-0.5 font-label-sm text-[10px] tracking-wider uppercase font-semibold bg-[#fee2e2] text-[#991b1b] border border-[#fca5a5]">Needs Review</span>
+            <span class="font-code-mono text-code-mono text-secondary">Page 6</span>
+          </div>
+          <h2 class="font-headline-sm text-headline-sm text-on-surface leading-tight hover:text-primary mb-1 line-clamp-2">
+            In Memoriam: Dr. Arthur Sterling, Professor of Oceanographic Chemistry (1954–2026)
+          </h2>
+          <div class="flex items-center justify-between font-label-sm text-label-sm text-secondary pt-1">
+            <span class="text-on-surface-variant font-medium">Office of Provost</span>
+            <span class="font-code-mono">430 wds</span>
+          </div>
+        </article></div>
+<!-- Left Utility Actions Footer -->
+<div class="p-space-sm bg-surface-container-lowest border-t border-surface-container-high space-y-space-xs"><button class="w-full h-8 px-space-sm border border-outline-variant hover:bg-surface-container text-on-surface-variant font-label-sm text-label-sm flex items-center justify-center gap-1.5" type="button"><span class="material-symbols-outlined text-[15px]">post_add</span><span>ADD ARTICLE</span></button></div>
+</div>
+<!-- PANE 2: CENTER PROOF & VERIFICATION SHEET (6 Cols Desktop) -->
+<div class="lg:col-span-6 flex flex-col bg-surface">
+<!-- Proof Sheet Control Ribbon -->
+<div class="h-10 px-space-md border-b border-surface-container-high bg-surface-container-lowest flex items-center justify-between">
+<div class="flex items-center gap-space-sm"><span class="font-code-mono text-code-mono text-on-surface font-semibold uppercase" id="article-counter-badge">Article 1 of 7</span></div>
+<!-- Interactive View Mode Switch Controls -->
+<div class="flex items-center gap-2"><div class="flex items-center gap-1"><button class="h-7 px-2 border border-outline-variant bg-surface-container-lowest hover:bg-surface-container text-on-surface font-label-sm text-label-sm flex items-center gap-1" id="prev-article-btn" type="button"><span class="material-symbols-outlined text-[14px]">arrow_back</span><span>PREV</span></button><button class="h-7 px-2 border border-outline-variant bg-surface-container-lowest hover:bg-surface-container text-on-surface font-label-sm text-label-sm flex items-center gap-1" id="next-article-btn" type="button"><span>NEXT</span><span class="material-symbols-outlined text-[14px]">arrow_forward</span></button></div></div>
+</div>
+<!-- Main Galley Reading Area -->
+<div class="flex-1 overflow-y-auto bg-surface flex justify-center p-0">
+<!-- Physical Newsprint Proof Canvas -->
+<article class="w-full bg-surface-container-lowest text-on-surface flex flex-col h-full min-h-[640px] p-space-md"><!-- Article Title Header Input Box -->
+<div class="mb-space-md"><input id="article-title-field" type="text" class="w-full font-headline-md text-[20px] font-semibold text-on-surface bg-surface-container-lowest border border-outline-variant p-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Article Headline" value="In Memoriam: Dr. Arthur Sterling, Professor of Oceanographic Chemistry (1954–2026)"></div>
+
+<!-- Single Unified Editor & Proof Preview Stage -->
+<div class="border border-outline-variant bg-surface-container-lowest shadow-sm w-full flex-1 flex flex-col min-h-[520px]">
+  
+
+  <div id="visual-mode-container" class="p-space-md flex-1 flex flex-col h-full cursor-pointer select-text group" title="Click to edit HTML source">
+    <div id="visual-proof-canvas" class="prose max-w-none font-article-body text-article-body text-on-surface leading-relaxed space-y-4 focus:outline-none p-4 rounded bg-surface border border-outline-variant min-h-[480px] group-hover:border-primary transition-colors flex-1">
+      <p class="byline"><strong>OCTOBER 16, 2026</strong><br>FROM THE <a href="#" class="text-primary hover:underline">OFFICE OF THE PROVOST</a></p>
+      <p>The Nova Southeastern University community mourns the passing of Dr. Arthur Sterling, emeritus professor at the Halmos College of Arts and Sciences, whose pioneering research on deep-sea carbonate reefs spanned over three decades.</p>
+      <p>A memorial reception will be held at the Guy Harvey Oceanographic Center later this month.</p>
+    </div>
+  </div>
+
+  <div id="code-mode-container" class="p-space-md flex-1 flex flex-col h-full hidden">
+    
+    <label class="sr-only" for="html-editor-area">Article HTML Source Code</label>
+    <textarea id="html-editor-area" class="w-full h-[520px] font-code-mono text-[13px] leading-relaxed text-[#0b1c30] bg-[#f8fafc] border-2 border-[#3b82f6] ring-4 ring-[#3b82f6]/20 p-space-md rounded focus:outline-none focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/25 resize-y select-all flex-1 min-h-[480px]" spellcheck="false"></textarea>
+  </div>
+</div></article>
+</div>
+</div>
+<!-- PANE 3: WORDPRESS METADATA & TAXONOMY INSPECTOR (3 Cols Desktop) -->
+<div class="lg:col-span-3 flex flex-col bg-surface-container-low">
+<!-- Inspector Masthead -->
+<div class="h-10 px-space-sm border-b border-surface-container-high bg-surface-container-lowest flex items-center justify-between">
+<span class="font-label-sm text-label-sm font-bold uppercase tracking-wider text-on-surface">WP Metadata Inspector</span>
+</div>
+<!-- Inspector Panels Container -->
+<div class="flex-1 overflow-y-auto divide-y divide-surface-container-high">
+<!-- SECTION 1: AUTHOR ASSIGNMENT -->
+<div class="p-space-sm space-y-space-xs bg-surface-container-lowest">
+<div class="flex items-center justify-between">
+<label class="font-label-sm text-label-sm uppercase font-bold text-on-surface-variant">Author Attribution</label>
+</div>
+<div class="p-space-xs border border-outline-variant bg-surface flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<div class="w-7 h-7 bg-secondary-container text-on-secondary-fixed flex items-center justify-center font-code-mono text-code-mono font-bold" id="author-avatar">SH</div>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface" id="author-name-display">Sara Hereira</span>
+<span class="font-code-mono text-[10px] text-secondary" id="author-role-display">Contributing Staff Writer</span>
+</div>
+</div>
+<button class="text-primary hover:text-on-surface font-label-sm text-label-sm underline" id="change-author-btn" type="button">Change</button>
+</div>
+<div class="flex items-center justify-between pt-1">
+<label class="flex items-center gap-1.5 cursor-pointer font-body-sm text-body-sm text-on-surface-variant">
+<input checked="" class="w-3.5 h-3.5 accent-primary border border-outline-variant rounded-none" id="byline-override-check" type="checkbox">
+<span>Use Print Byline Override</span>
+</label>
+<span class="font-code-mono text-[11px] text-secondary" id="byline-preview-text">by Sara Hereira</span>
+</div>
+</div>
+<!-- SECTION 2: CATEGORIES (One-Click Selection) -->
+<div class="p-space-sm space-y-space-xs bg-surface-container-lowest">
+<div class="flex items-center justify-between">
+<label class="font-label-sm text-label-sm uppercase font-bold text-on-surface-variant">WordPress Category</label>
+</div>
+<div class="flex flex-wrap gap-1" id="category-pills">
+<button class="cat-pill px-2 py-1 bg-surface border border-outline-variant text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-sm text-label-sm flex items-center gap-1" data-cat="Sports" type="button">
+<span class="check-icon material-symbols-outlined text-[13px] hidden">check</span>
+<span>Sports</span>
+</button>
+<button class="cat-pill px-2 py-1 bg-primary text-on-primary font-label-sm text-label-sm flex items-center gap-1" data-cat="Campus Life" type="button">
+<span class="check-icon material-symbols-outlined text-[13px]">check</span>
+<span>Campus Life</span>
+</button>
+<button class="cat-pill px-2 py-1 bg-surface border border-outline-variant text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-sm text-label-sm flex items-center gap-1" data-cat="News" type="button">
+<span class="check-icon material-symbols-outlined text-[13px] hidden">check</span>
+<span>News</span>
+</button>
+<button class="cat-pill px-2 py-1 bg-surface border border-outline-variant text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-sm text-label-sm flex items-center gap-1" data-cat="Features" type="button">
+<span class="check-icon material-symbols-outlined text-[13px] hidden">check</span>
+<span>Features</span>
+</button>
+<button class="cat-pill px-2 py-1 bg-surface border border-outline-variant text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-sm text-label-sm flex items-center gap-1" data-cat="Opinion" type="button">
+<span class="check-icon hidden material-symbols-outlined text-[13px]">check</span>
+<span>Opinion</span>
+</button>
+</div>
+</div>
+<!-- SECTION 3: TAGS & AUTOMATED TAXONOMY SUGGESTIONS -->
+<div class="p-space-sm space-y-space-xs bg-surface-container-lowest">
+<div class="flex items-center justify-between">
+<label class="font-label-sm text-label-sm uppercase font-bold text-on-surface-variant">Tags</label>
+</div>
+<!-- Active Tag List -->
+<div class="flex flex-wrap gap-1 items-center pb-1" id="active-tags-list"><span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-surface-container-high text-on-surface font-code-mono text-code-mono border border-outline-variant"><span>athletics</span><button class="text-secondary hover:text-error ml-1 font-bold text-[11px]" type="button">✕</button></span><span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-surface-container-high text-on-surface font-code-mono text-code-mono border border-outline-variant"><span>hall-of-fame</span><button class="text-secondary hover:text-error ml-1 font-bold text-[11px]" type="button">✕</button></span></div>
+<!-- Inline Tag Entry Input -->
+<div class="relative w-full">
+<input class="w-full h-8 px-space-xs bg-surface-container-lowest border border-outline-variant text-on-surface font-body-sm text-body-sm rounded-none focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="tag-input-field" placeholder="Add tag and press Enter..." type="text">
+</div>
+<!-- Copy Extraction Suggestions -->
+<div class="pt-space-xs space-y-1">
+<span class="font-label-sm text-[10px] uppercase font-bold text-secondary tracking-wider block">Suggested from text:</span>
+<div class="flex flex-wrap gap-1" id="suggested-tags-container"><button type="button" class="px-1.5 py-0.5 bg-surface border border-outline-variant hover:border-primary text-secondary hover:text-primary font-code-mono text-[11px] transition-colors">+ Broward County</button><button type="button" class="px-1.5 py-0.5 bg-surface border border-outline-variant hover:border-primary text-secondary hover:text-primary font-code-mono text-[11px] transition-colors">+ Men's Basketball</button><button type="button" class="px-1.5 py-0.5 bg-surface border border-outline-variant hover:border-primary text-secondary hover:text-primary font-code-mono text-[11px] transition-colors">+ NSU Sharks</button><button type="button" class="px-1.5 py-0.5 bg-surface border border-outline-variant hover:border-primary text-secondary hover:text-primary font-code-mono text-[11px] transition-colors">+ Jim Crutchfield</button></div>
+</div>
+</div>
+<!-- SECTION 4: FEATURED MEDIA & CROPS -->
+<div class="p-space-sm space-y-space-xs bg-surface-container-lowest">
+<div class="flex items-center justify-between">
+<label class="font-label-sm text-label-sm uppercase font-bold text-on-surface-variant">Featured Image</label>
+</div>
+<div class="relative border border-outline-variant bg-surface-container-low group">
+<img alt="Article featured media" class="w-full h-32 object-cover" id="featured-image-display" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2nfPqXbD9ZDz-4YxUM-Lw5ws5hJ1lDnwVQBwS-6_eplwHcWPncQIXtbrm3sNNLHi-JPNLmj8kiK36gAOjq4sMa9O2LDyAaTRbnryzjlrbO6ePdOTf8r4abHpLA8Pnt7EOA_vnIGAceLO_6_9VhAqXe6YsxxliKZVS5VNGiRLQrI5XdE-zhLuPbWQdaqrBQBaYZHkOGddFZFd9GaRWSmX1UAf-uy1PrTEyPvHsr-aNGzF7IJkjpEw4">
+<div class="p-space-xs bg-surface-container-lowest border-t border-outline-variant flex items-center justify-between font-code-mono text-code-mono text-secondary">
+<span class="truncate max-w-[170px]" id="featured-image-filename">razors_boo_bash_candy.jpg</span>
+</div>
+</div>
+</div>
+<!-- SECTION 5: PERMALINK & SEO SNIPPET -->
+<div class="p-space-sm space-y-space-xs bg-surface-container-lowest">
+<label class="font-label-sm text-label-sm uppercase font-bold text-on-surface-variant block">WordPress Slug</label>
+<input class="w-full h-8 px-space-xs bg-surface-container border border-outline-variant text-on-surface font-code-mono text-[11px] select-all focus:outline-none" id="slug-field" readonly="" type="text" value="nsu-hosts-razors-boo-bash-community">
+</div>
+</div>
+<!-- REVIEW SAFEGUARD & PRIMARY ACTION GATE -->
+<div class="p-space-sm bg-surface-container-lowest border-t-2 border-surface-container-high space-y-space-xs">
+<!-- Strict Verification Checkbox Gate -->
+<label class="p-space-xs border border-outline-variant bg-surface flex items-start gap-2 cursor-pointer hover:bg-surface-container-low transition-colors">
+<input class="mt-0.5 w-4 h-4 accent-primary border border-outline-variant rounded-none" id="review-gate-check" type="checkbox">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm font-bold text-on-surface uppercase">Mark article as reviewed</span>
+<span class="font-body-sm text-[11px] text-secondary leading-tight">Verified against print issue.</span>
+</div>
+</label>
+<!-- Push Trigger -->
+<button class="w-full h-10 px-space-md font-label-md text-label-md uppercase tracking-wider font-semibold border flex items-center justify-center gap-2 transition-colors bg-surface-container-high text-on-surface-variant opacity-75 cursor-not-allowed border-outline-variant" id="push-draft-btn" type="button" disabled=""><span class="material-symbols-outlined text-[18px]">publish</span><span>Push to WordPress Draft</span></button>
+</div>
+</div>
+</div>
+<!-- Toast Notification Element -->
+<div class="fixed bottom-6 right-6 z-50 bg-[#14532d] text-white px-4 py-3 shadow-lg border border-[#22c55e] flex items-center gap-3 transition-opacity duration-300 opacity-0 pointer-events-none" id="toast-notification">
+<span class="material-symbols-outlined text-[#86efac] text-[20px]">check_circle</span>
+<span class="font-body-sm text-body-sm font-medium" id="toast-message">Article pushed to WordPress as Draft #1042</span>
+</div>
+<!-- Interactive Editorial Workbench Script -->
+<script>
+  (function initEditorialWorkbench() {
+    // Mock Data Store for Issue Articles
+    const articlesData = [
+      {
+        id: 1,
+        title: "NSU Hosts Razor’s Boo Bash For The Community",
+        pageInfo: "P. 03 · CAMPUS",
+        wordCount: "286 wds",
+        author: "Sara Hereira",
+        authorRole: "Contributing Staff Writer",
+        authorInitials: "SH",
+        category: "Campus Life",
+        reviewed: false,
+        slug: "nsu-hosts-razors-boo-bash-community",
+        image: "https://lh3.googleusercontent.com/aida-public/AB6AXuC2nfPqXbD9ZDz-4YxUM-Lw5ws5hJ1lDnwVQBwS-6_eplwHcWPncQIXtbrm3sNNLHi-JPNLmj8kiK36gAOjq4sMa9O2LDyAaTRbnryzjlrbO6ePdOTf8r4abHpLA8Pnt7EOA_vnIGAceLO_6_9VhAqXe6YsxxliKZVS5VNGiRLQrI5XdE-zhLuPbWQdaqrBQBaYZHkOGddFZFd9GaRWSmX1UAf-uy1PrTEyPvHsr-aNGzF7IJkjpEw4",
+        imageName: "razors_boo_bash_candy.jpg",
+        tags: ["athletics", "hall-of-fame"],
+        suggestedTags: ["Broward County", "Men's Basketball", "NSU Sharks", "Jim Crutchfield"],
+        html: `<p class="byline">
+  <strong>NOVEMBER 4, 2026</strong><br>
+  BY <a href="#" class="text-primary hover:underline">SARA HEREIRA</a>
+</p>
+
+<p>NSU recently hosted “Razor’s Boo Bash” at the Shark Circle for the university and the Davie community. The Center of Student Leadership and Global Engagement, in collaboration with the College of Psychology Student Government Association, organized the event, where attendees had the opportunity to trick-or-treat and browse the clubs and organizations.</p>
+
+<p>In addition to food trucks, there were 30 tables of clubs and organizations handing out candy, including the Alvin Sherman Library, Research, and Information Technology Center, the Pakistani Student Association and the Association of Neuropsychology Students & Trainees.</p>
+
+<p>Daren Capirchio, director of the Center for Student Leadership and Global Engagement, said this NSU Halloween tradition brings the local community and students together.</p>
+
+<p>“For our local families and kids, it gives them an opportunity to come to campus if they may not ordinarily have,” he said. “For our students, they just have fun doing this.”</p>
+
+<p>Anthony Seitz, senior finance major and business academic senator for the 39th Undergraduate Student Government Association, volunteered at the event and said it was rewarding to engage with both students and community families.</p>`
+      },
+      {
+        id: 2,
+        title: "Student Government passes historic resolution on dining hall wages",
+        pageInfo: "P. 01 · NEWS",
+        wordCount: "412 wds",
+        author: "Elena Vance",
+        authorRole: "Senior News Editor",
+        authorInitials: "EV",
+        category: "News",
+        reviewed: true,
+        slug: "student-gov-passes-resolution-dining-wages",
+        image: "https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=600&q=80",
+        imageName: "sga_senate_assembly.jpg",
+        tags: ["student-government", "campus-wages", "dining-services"],
+        suggestedTags: ["Senate Resolution", "Student Life", "Labor"],
+        html: `<p class="byline">
+  <strong>OCTOBER 28, 2026</strong><br>
+  BY <a href="#" class="text-primary hover:underline">ELENA VANCE</a>
+</p>
+
+<p>In an overwhelming 28–2 vote Wednesday night, the Undergraduate Student Government Association adopted Resolution 39-14, recommending an immediate cost-of-living stipend increase for student auxiliary employees across university dining halls.</p>
+
+<p>The resolution follows weeks of testimony from undergraduate culinary workers highlighting discrepancies between on-campus federal work-study wages and rising off-campus living costs in Broward County.</p>
+
+<p>“We are sending an unequivocal signal to the provost and campus finance leadership,” USGA President Marcus Sterling stated following the roll-call vote.</p>`
+      },
+      {
+        id: 3,
+        title: "Fort Lauderdale downtown rail corridor construction delayed through spring",
+        pageInfo: "P. 04 · METRO",
+        wordCount: "350 wds",
+        author: "Marcus Thorne",
+        authorRole: "Metro Correspondent",
+        authorInitials: "MT",
+        category: "News",
+        reviewed: false,
+        slug: "fort-lauderdale-rail-corridor-delayed",
+        image: "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=600&q=80",
+        imageName: "commuter_rail_tracks.jpg",
+        tags: ["infrastructure", "transportation", "broward-county"],
+        suggestedTags: ["Brightline", "Regional Transit", "City Council"],
+        html: `<p class="byline">
+  <strong>OCTOBER 24, 2026</strong><br>
+  BY <a href="#" class="text-primary hover:underline">MARCUS THORNE</a>
+</p>
+
+<p>Supply chain constraints on specialized signals and switches will delay completion of the Fort Lauderdale downtown rail link through at least May 2027, transportation authorities confirmed Monday.</p>
+
+<p>Commuters heading between Davie and the downtown arts district should prepare for continued motor coach detours as grade crossings remain under active retrofitting.</p>`
+      },
+      {
+        id: 4,
+        title: "Gallery 217 showcases student prints capturing vanishing coastal architecture",
+        pageInfo: "P. 08 · ARTS",
+        wordCount: "320 wds",
+        author: "Maya Lin",
+        authorRole: "Arts & Culture Writer",
+        authorInitials: "ML",
+        category: "Features",
+        reviewed: false,
+        slug: "gallery-217-student-prints-coastal-architecture",
+        image: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=600&q=80",
+        imageName: "gallery_printmaking_exhibit.jpg",
+        tags: ["fine-arts", "printmaking", "exhibition"],
+        suggestedTags: ["South Florida", "Architecture", "Photography"],
+        html: `<p class="byline">
+  <strong>OCTOBER 22, 2026</strong><br>
+  BY <a href="#" class="text-primary hover:underline">MAYA LIN</a>
+</p>
+
+<p>A new exhibition at Gallery 217 in the Parker Building features hand-pulled relief prints and cyanotypes documenting mid-century beach motels facing imminent redevelopment across Hollywood Beach.</p>
+
+<p>Curated by senior printmaker Tyler Santos, the works emphasize structural fragility in dialogue with rising tide levels.</p>`
+      },
+      {
+        id: 5,
+        title: "Editorial: Automated plagiarism detectors are failing students and educators alike",
+        pageInfo: "P. 10 · OPINION",
+        wordCount: "580 wds",
+        author: "Staff Editorial Board",
+        authorRole: "Opinion Desk",
+        authorInitials: "EB",
+        category: "Opinion",
+        reviewed: false,
+        slug: "editorial-automated-plagiarism-detectors-fail",
+        image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=600&q=80",
+        imageName: "editorial_typewriter_notes.jpg",
+        tags: ["editorial", "academic-integrity", "ai-detection"],
+        suggestedTags: ["Higher Education", "Faculty Senate", "Ethics"],
+        html: `<p class="byline">
+  <strong>OCTOBER 20, 2026</strong><br>
+  BY <a href="#" class="text-primary hover:underline">THE CURRENT EDITORIAL BOARD</a>
+</p>
+
+<p>Universities rushing to adopt AI verification software are discovering what independent computer scientists have reiterated for months: false positive rates are unacceptably high and disproportionately punish non-native English writers.</p>
+
+<p>It is time for faculty leadership to replace algorithmic surveillance with constructive, portfolio-based assessment.</p>`
+      },
+      {
+        id: 6,
+        title: "Women's volleyball secures Sunshine State Conference tournament berth",
+        pageInfo: "P. 12 · SPORTS",
+        wordCount: "295 wds",
+        author: "Jordan Moon",
+        authorRole: "Sports Reporter",
+        authorInitials: "JM",
+        category: "Sports",
+        reviewed: false,
+        slug: "womens-volleyball-secures-ssc-tournament-berth",
+        image: "https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=600&q=80",
+        imageName: "volleyball_ssc_match.jpg",
+        tags: ["volleyball", "sunshine-state-conference", "ncaa-div-ii"],
+        suggestedTags: ["Sharks Athletics", "Rick Case Arena", "Postseason"],
+        html: `<p class="byline">
+  <strong>OCTOBER 19, 2026</strong><br>
+  BY <a href="#" class="text-primary hover:underline">JORDAN MOON</a>
+</p>
+
+<p>With an emphatic sweep over Tampa on Saturday afternoon at the Rick Case Arena, the NSU Women’s Volleyball squad guaranteed their third straight trip to the Sunshine State Conference championship bracket.</p>
+
+<p>Junior outside hitter Alexa Ramos led all players with 18 kills and two service aces.</p>`
+      },
+      {
+        id: 7,
+        title: "In Memoriam: Dr. Arthur Sterling, Professor of Oceanographic Chemistry (1954–2026)",
+        pageInfo: "P. 06 · CAMPUS",
+        wordCount: "430 wds",
+        author: "Office of Provost",
+        authorRole: "Faculty In Memoriam",
+        authorInitials: "OP",
+        category: "Campus Life",
+        reviewed: false,
+        slug: "in-memoriam-dr-arthur-sterling",
+        image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80",
+        imageName: "sterling_marine_center.jpg",
+        tags: ["in-memoriam", "oceanography", "halmos-college"],
+        suggestedTags: ["Faculty", "Marine Science", "Coral Restoration"],
+        html: `<p class="byline">
+  <strong>OCTOBER 16, 2026</strong><br>
+  FROM THE <a href="#" class="text-primary hover:underline">OFFICE OF THE PROVOST</a>
+</p>
+
+<p>The Nova Southeastern University community mourns the passing of Dr. Arthur Sterling, emeritus professor at the Halmos College of Arts and Sciences, whose pioneering research on deep-sea carbonate reefs spanned over three decades.</p>
+
+<p>A memorial reception will be held at the Guy Harvey Oceanographic Center later this month.</p>`
+      }
+    ];
+
+    let currentIndex = 0;
+    let activeFilter = 'all';
+    let searchQuery = '';
+    let isVisualMode = false; // defaults to code view matching original state
+
+    // DOM Elements
+    const queueEl = document.getElementById('articles-queue');
+    const titleField = document.getElementById('article-title-field');
+    const htmlEditor = document.getElementById('html-editor-area');
+    const visualProof = document.getElementById('visual-proof-canvas');
+    const codeContainer = document.getElementById('code-mode-container');
+    const visualContainer = document.getElementById('visual-mode-container');
+    const viewCodeBtn = document.getElementById('view-mode-code-btn');
+    const viewVisualBtn = document.getElementById('view-mode-visual-btn');
+    const inlineSwitchToCode = document.getElementById('inline-switch-to-code');
+    const counterBadge = document.getElementById('article-counter-badge');
+    const prevBtn = document.getElementById('prev-article-btn');
+    const nextBtn = document.getElementById('next-article-btn');
+    const searchInput = document.getElementById('article-search');
+    const filterPillsBar = document.getElementById('filter-pills-bar');
+    const reviewCheckbox = document.getElementById('review-gate-check');
+    const pushDraftBtn = document.getElementById('push-draft-btn');
+    const toast = document.getElementById('toast-notification');
+    const toastMsg = document.getElementById('toast-message');
+    const syncBtn = document.getElementById('sync-indd-btn');
+    const syncIcon = document.getElementById('sync-icon');
+    const syncText = document.getElementById('sync-text');
+    
+    // Inspector elements
+    const authorAvatar = document.getElementById('author-avatar');
+    const authorNameDisplay = document.getElementById('author-name-display');
+    const authorRoleDisplay = document.getElementById('author-role-display');
+    const bylinePreview = document.getElementById('byline-preview-text');
+    const slugField = document.getElementById('slug-field');
+    const featuredImg = document.getElementById('featured-image-display');
+    const featuredImgName = document.getElementById('featured-image-filename');
+    const activeTagsContainer = document.getElementById('active-tags-list');
+    const suggestedTagsContainer = document.getElementById('suggested-tags-container');
+    const tagInputField = document.getElementById('tag-input-field');
+    const categoryButtons = document.querySelectorAll('.cat-pill');
+
+    function updateCounts() {
+      const allCount = articlesData.length;
+      const needsCount = articlesData.filter(a => !a.reviewed).length;
+      const reviewedCount = articlesData.filter(a => a.reviewed).length;
+
+      document.getElementById('count-all').textContent = `(${allCount})`;
+      document.getElementById('count-needs').textContent = `(${needsCount})`;
+      document.getElementById('count-reviewed').textContent = `(${reviewedCount})`;
+    }
+
+    function renderQueue() {
+      queueEl.innerHTML = '';
+      articlesData.forEach((art, idx) => {
+        // filter check
+        let matchesFilter = true;
+        if (activeFilter === 'needs_review' && art.reviewed) matchesFilter = false;
+        if (activeFilter === 'reviewed' && !art.reviewed) matchesFilter = false;
+
+        // search check
+        let matchesSearch = true;
+        if (searchQuery.trim() !== '') {
+          const q = searchQuery.toLowerCase();
+          const inTitle = art.title.toLowerCase().includes(q);
+          const inAuthor = art.author.toLowerCase().includes(q);
+          matchesSearch = inTitle || inAuthor;
+        }
+
+        if (!matchesFilter || !matchesSearch) return;
+
+        const isCurrent = idx === currentIndex;
+        const articleItem = document.createElement('article');
+        articleItem.className = `p-space-sm cursor-pointer transition-colors border-l-4 ${
+          isCurrent 
+            ? 'bg-surface-container-lowest border-l-primary' 
+            : 'hover:bg-surface-container-lowest border-l-transparent'
+        }`;
+
+        const statusBadge = art.reviewed
+          ? `<span class="inline-flex items-center px-1.5 py-0.5 font-label-sm text-[10px] tracking-wider uppercase font-semibold bg-[#dcfce7] text-[#166534] border border-[#86efac]">Reviewed</span>`
+          : `<span class="inline-flex items-center px-1.5 py-0.5 font-label-sm text-[10px] tracking-wider uppercase font-semibold bg-[#fee2e2] text-[#991b1b] border border-[#fca5a5]">Needs Review</span>`;
+
+        articleItem.innerHTML = `
+          <div class="flex items-center justify-between gap-space-xs mb-1">
+            ${statusBadge}
+            <span class="font-code-mono text-code-mono text-secondary">${art.pageInfo}</span>
+          </div>
+          <h2 class="font-headline-sm text-headline-sm text-on-surface leading-tight hover:text-primary mb-1 line-clamp-2">
+            ${art.title}
+          </h2>
+          <div class="flex items-center justify-between font-label-sm text-label-sm text-secondary pt-1">
+            <span class="text-on-surface-variant font-medium">${art.author}</span>
+            <span class="font-code-mono">${art.wordCount}</span>
+          </div>
+        `;
+
+        articleItem.addEventListener('click', () => {
+          loadArticle(idx);
+        });
+
+        queueEl.appendChild(articleItem);
+      });
+      updateCounts();
+    }
+
+    function setViewMode(mode) {
+      if (mode === 'visual') {
+        isVisualMode = true;
+        codeContainer.classList.add('hidden');
+        visualContainer.classList.remove('hidden');
+        
+        // sync content to visual
+        visualProof.innerHTML = htmlEditor.value;
+
+        // buttons UI
+        viewVisualBtn.classList.add('bg-surface-container-lowest', 'text-primary', 'shadow-sm', 'border', 'border-outline-variant', 'font-bold');
+        viewVisualBtn.classList.remove('text-on-surface-variant');
+        viewCodeBtn.classList.remove('bg-surface-container-lowest', 'text-primary', 'shadow-sm', 'border', 'border-outline-variant', 'font-bold');
+        viewCodeBtn.classList.add('text-on-surface-variant');
+      } else {
+        isVisualMode = false;
+        visualContainer.classList.add('hidden');
+        codeContainer.classList.remove('hidden');
+
+        // buttons UI
+        viewCodeBtn.classList.add('bg-surface-container-lowest', 'text-primary', 'shadow-sm', 'border', 'border-outline-variant', 'font-bold');
+        viewCodeBtn.classList.remove('text-on-surface-variant');
+        viewVisualBtn.classList.remove('bg-surface-container-lowest', 'text-primary', 'shadow-sm', 'border', 'border-outline-variant', 'font-bold');
+        viewVisualBtn.classList.add('text-on-surface-variant');
+      }
+    }
+
+    function renderTags() {
+      const art = articlesData[currentIndex];
+      activeTagsContainer.innerHTML = '';
+      art.tags.forEach((tag, idx) => {
+        const span = document.createElement('span');
+        span.className = 'inline-flex items-center gap-1 px-1.5 py-0.5 bg-surface-container-high text-on-surface font-code-mono text-code-mono border border-outline-variant';
+        span.innerHTML = `<span>${tag}</span><button class="text-secondary hover:text-error ml-1 font-bold text-[11px]" type="button">✕</button>`;
+        
+        span.querySelector('button').addEventListener('click', (e) => {
+          e.stopPropagation();
+          art.tags.splice(idx, 1);
+          renderTags();
+        });
+        activeTagsContainer.appendChild(span);
+      });
+
+      suggestedTagsContainer.innerHTML = '';
+      art.suggestedTags.forEach((sugTag) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'px-1.5 py-0.5 bg-surface border border-outline-variant hover:border-primary text-secondary hover:text-primary font-code-mono text-[11px] transition-colors';
+        btn.textContent = `+ ${sugTag}`;
+        btn.addEventListener('click', () => {
+          const cleanTag = sugTag.toLowerCase().replace(/['\s]/g, '-');
+          if (!art.tags.includes(cleanTag)) {
+            art.tags.push(cleanTag);
+            renderTags();
+          }
+        });
+        suggestedTagsContainer.appendChild(btn);
+      });
+    }
+
+    function updateCategoryUI(currentCat) {
+      categoryButtons.forEach(btn => {
+        const catName = btn.getAttribute('data-cat');
+        const icon = btn.querySelector('.check-icon');
+        if (catName === currentCat) {
+          btn.className = 'cat-pill px-2 py-1 bg-primary text-on-primary font-label-sm text-label-sm flex items-center gap-1';
+          if (icon) icon.classList.remove('hidden');
+        } else {
+          btn.className = 'cat-pill px-2 py-1 bg-surface border border-outline-variant text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-sm text-label-sm flex items-center gap-1';
+          if (icon) icon.classList.add('hidden');
+        }
+      });
+    }
+
+    function updatePushDraftState(isReviewed) {
+      if (isReviewed) {
+        pushDraftBtn.disabled = false;
+        pushDraftBtn.classList.remove('bg-surface-container-high', 'text-on-surface-variant', 'opacity-75', 'cursor-not-allowed', 'border-outline-variant');
+        pushDraftBtn.classList.add('bg-[#166534]', 'hover:bg-[#14532d]', 'text-white', 'border-[#14532d]', 'cursor-pointer');
+        pushDraftBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">cloud_upload</span><span>Ready: Commit to WordPress</span>';
+      } else {
+        pushDraftBtn.disabled = true;
+        pushDraftBtn.classList.remove('bg-[#166534]', 'hover:bg-[#14532d]', 'text-white', 'border-[#14532d]', 'cursor-pointer');
+        pushDraftBtn.classList.add('bg-surface-container-high', 'text-on-surface-variant', 'opacity-75', 'cursor-not-allowed', 'border-outline-variant');
+        pushDraftBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">publish</span><span>Push to WordPress Draft</span>';
+      }
+    }
+
+    function loadArticle(index) {
+      if (index < 0 || index >= articlesData.length) return;
+      currentIndex = index;
+      const art = articlesData[currentIndex];
+
+      // Update counter
+      counterBadge.textContent = `Article ${currentIndex + 1} of ${articlesData.length}`;
+
+      // Update Center Editor & Title
+      titleField.value = art.title;
+      htmlEditor.value = art.html;
+      visualProof.innerHTML = art.html;
+
+      // Update Inspector
+      authorNameDisplay.textContent = art.author;
+      authorRoleDisplay.textContent = art.authorRole;
+      authorAvatar.textContent = art.authorInitials;
+      bylinePreview.textContent = `by ${art.author}`;
+      slugField.value = art.slug;
+      featuredImg.src = art.image;
+      featuredImgName.textContent = art.imageName;
+
+      // Review checkbox state
+      reviewCheckbox.checked = art.reviewed;
+      updatePushDraftState(art.reviewed);
+
+      // Category buttons state
+      updateCategoryUI(art.category);
+
+      // Tags
+      renderTags();
+
+      // Re-render Queue items to reflect selection and badges
+      renderQueue();
+    }
+
+    // Event Listeners for Editor
+    htmlEditor.addEventListener('input', () => {
+      articlesData[currentIndex].html = htmlEditor.value;
+      visualProof.innerHTML = htmlEditor.value;
+    });
+
+    visualProof.addEventListener('input', () => {
+      articlesData[currentIndex].html = visualProof.innerHTML;
+      htmlEditor.value = visualProof.innerHTML;
+    });
+
+    titleField.addEventListener('input', () => {
+      articlesData[currentIndex].title = titleField.value;
+      renderQueue();
+    });
+
+    // Toggle view controls
+    viewVisualBtn.addEventListener('click', () => setViewMode('visual'));
+    viewCodeBtn.addEventListener('click', () => setViewMode('code'));
+    inlineSwitchToCode.addEventListener('click', () => setViewMode('code'));
+
+    // Navigation buttons
+    prevBtn.addEventListener('click', () => {
+      if (currentIndex > 0) {
+        loadArticle(currentIndex - 1);
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (currentIndex < articlesData.length - 1) {
+        loadArticle(currentIndex + 1);
+      }
+    });
+
+    // Review safeguard checkbox
+    reviewCheckbox.addEventListener('change', (e) => {
+      articlesData[currentIndex].reviewed = e.target.checked;
+      updatePushDraftState(e.target.checked);
+      renderQueue();
+    });
+
+    // Push to WordPress Draft action
+    pushDraftBtn.addEventListener('click', () => {
+      if (!articlesData[currentIndex].reviewed) return;
+      const draftId = Math.floor(1000 + Math.random() * 9000);
+      toastMsg.textContent = `Article "${articlesData[currentIndex].title.substring(0, 24)}..." pushed to WordPress as Draft #${draftId}`;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      toast.classList.add('opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 3500);
+    });
+
+    // Sync INDD button interaction
+    syncBtn.addEventListener('click', () => {
+      syncIcon.classList.add('animate-spin');
+      syncText.textContent = 'Syncing...';
+      setTimeout(() => {
+        syncIcon.classList.remove('animate-spin');
+        syncText.textContent = 'Synced';
+        setTimeout(() => {
+          syncText.textContent = 'Sync INDD';
+        }, 1500);
+      }, 1000);
+    });
+
+    // Add Tag Input
+    tagInputField.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && tagInputField.value.trim() !== '') {
+        e.preventDefault();
+        const newTag = tagInputField.value.trim().toLowerCase().replace(/['\s]/g, '-');
+        if (!articlesData[currentIndex].tags.includes(newTag)) {
+          articlesData[currentIndex].tags.push(newTag);
+          renderTags();
+        }
+        tagInputField.value = '';
+      }
+    });
+
+    // Category button selection
+    categoryButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cat = btn.getAttribute('data-cat');
+        articlesData[currentIndex].category = cat;
+        updateCategoryUI(cat);
+      });
+    });
+
+    // Author Change Button (Demo Toggle)
+    const changeAuthorBtn = document.getElementById('change-author-btn');
+    if (changeAuthorBtn) {
+      changeAuthorBtn.addEventListener('click', () => {
+        const currentArt = articlesData[currentIndex];
+        if (currentArt.author === 'Sara Hereira') {
+          currentArt.author = 'Elena Vance';
+          currentArt.authorRole = 'Senior News Editor';
+          currentArt.authorInitials = 'EV';
+        } else {
+          currentArt.author = 'Sara Hereira';
+          currentArt.authorRole = 'Contributing Staff Writer';
+          currentArt.authorInitials = 'SH';
+        }
+        authorNameDisplay.textContent = currentArt.author;
+        authorRoleDisplay.textContent = currentArt.authorRole;
+        authorAvatar.textContent = currentArt.authorInitials;
+        bylinePreview.textContent = `by ${currentArt.author}`;
+        renderQueue();
+      });
+    }
+
+    // Filter bar (All, Needs Review, Reviewed)
+    const filterButtons = filterPillsBar.querySelectorAll('.filter-btn');
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => {
+          b.className = 'filter-btn px-2 py-1 text-on-surface-variant hover:text-on-surface hover:bg-surface-container';
+        });
+        btn.className = 'filter-btn px-2 py-1 bg-surface-container-lowest text-primary font-bold border border-outline-variant';
+        activeFilter = btn.getAttribute('data-filter');
+        renderQueue();
+      });
+    });
+
+    // Search input
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      renderQueue();
+    });
+
+    // Global keyboard shortcut
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        if (!reviewCheckbox.checked) {
+          reviewCheckbox.checked = true;
+          reviewCheckbox.dispatchEvent(new Event('change'));
+        }
+        if (pushDraftBtn && !pushDraftBtn.disabled) {
+          pushDraftBtn.focus();
+          pushDraftBtn.click();
+        }
+      }
+    });
+
+    // Initial load
+    loadArticle(0);
+  })();
+</script>
+</div></main></div>
+
+
+
+</body></html>
