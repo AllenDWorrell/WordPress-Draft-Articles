@@ -7,6 +7,16 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+try:
+    import keyring
+except ImportError:
+    keyring=None
+
+
+KEYRING_SERVICE='The Current - WordPress'
+USERNAME_KEY='username'
+PASSWORD_KEY='application-password'
+
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self,*args,**kwargs):
@@ -42,6 +52,56 @@ def load_settings(root,default_site):
 
 def wordpress_ready(settings):
     return bool(settings['username'] and settings['password'].replace(' ',''))
+
+
+def credential_status():
+    if keyring is None:
+        return dict(configured=False,backend_available=False)
+    try:
+        username=keyring.get_password(KEYRING_SERVICE,USERNAME_KEY) or ''
+        password=keyring.get_password(KEYRING_SERVICE,PASSWORD_KEY) or ''
+        return dict(configured=bool(username and password.replace(' ','')),
+                    backend_available=True)
+    except Exception:
+        return dict(configured=False,backend_available=False)
+
+
+def get_credentials(default_site):
+    status=credential_status()
+    if not status['backend_available']:
+        return dict(site=default_site,username='',password='')
+    try:
+        username=keyring.get_password(KEYRING_SERVICE,USERNAME_KEY) or ''
+        password=keyring.get_password(KEYRING_SERVICE,PASSWORD_KEY) or ''
+    except Exception:
+        return dict(site=default_site,username='',password='')
+    return dict(site=default_site,username=username,password=password)
+
+
+def save_credentials(site,username,password):
+    if keyring is None:
+        raise ValueError('Windows Credential Manager support is unavailable.')
+    site=(site or '').strip().rstrip('/')
+    validate_site(site)
+    username=username.strip()
+    password=password.strip()
+    if not username or not password.replace(' ',''):
+        raise ValueError('Enter both a WordPress username and application password.')
+    try:
+        keyring.set_password(KEYRING_SERVICE,USERNAME_KEY,username)
+        keyring.set_password(KEYRING_SERVICE,PASSWORD_KEY,password)
+    except Exception as error:
+        raise ValueError('Could not store credentials in Windows Credential Manager.') from error
+
+
+def delete_credentials():
+    if keyring is None:
+        return
+    for key in (PASSWORD_KEY,USERNAME_KEY):
+        try:
+            keyring.delete_password(KEYRING_SERVICE,key)
+        except Exception:
+            pass
 
 
 def validate_site(site):

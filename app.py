@@ -4,7 +4,9 @@ import urllib.error,urllib.parse,uuid,webbrowser
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
 from indd_reader import read_indd
-from wordpress import (WordPressError, load_settings, request as wp_request,
+from wordpress import (WordPressError, load_settings, get_credentials,
+                       credential_status, save_credentials, delete_credentials,
+                       request as wp_request,
                        validate_site as validate_wordpress_site,
                        wordpress_ready)
 from storage import Repository
@@ -31,7 +33,13 @@ def content_security_policy():
             "script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'")
 
 def wordpress_settings():
-    return load_settings(ROOT,DEFAULT_SITE)
+    settings=get_credentials(repository().get_setting('wordpress_site',DEFAULT_SITE))
+    if settings['username'] or settings['password']:
+        return settings
+    legacy=load_settings(ROOT,DEFAULT_SITE)
+    if legacy['username'] or legacy['password']:
+        return legacy
+    return settings
 
 def uid():return uuid.uuid4().hex
 
@@ -576,7 +584,7 @@ class Handler(BaseHTTPRequestHandler):
             if path=='/api/wordpress':
                 settings = wordpress_settings()
                 validate_wordpress_site(settings['site'])
-                return self.send(200, dict(site=settings['site'], configured=wordpress_ready(settings)))
+                return self.send(200,dict(site=settings['site'],configured=wordpress_ready(settings)))
             if path=='/api/taxonomy':
                 settings=wordpress_settings();result={}
                 for kind in ('categories','tags'):
@@ -603,6 +611,18 @@ class Handler(BaseHTTPRequestHandler):
                 if self.path=='/api/save':
                     require_active_issue(data.get('id'))
                     result=save_edits(data)
+                elif self.path=='/api/wordpress/setup':
+                    save_credentials(data.get('site',''),data.get('username',''),data.get('password',''))
+                    repository().set_setting('wordpress_site',data['site'].strip().rstrip('/'))
+                    settings=wordpress_settings()
+                    validate_wordpress_site(settings['site'])
+                    wp_request(settings['site'],'users/me',settings['username'],settings['password'],
+                               )
+                    result=dict(site=settings['site'],configured=True)
+                elif self.path=='/api/wordpress/remove':
+                    delete_credentials()
+                    repository().set_setting('wordpress_site',DEFAULT_SITE)
+                    result=dict(site=DEFAULT_SITE,configured=False)
                 elif self.path=='/api/close':
                     require_active_issue(data.get('id'))
                     set_active_issue(None)

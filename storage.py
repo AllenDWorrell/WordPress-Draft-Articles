@@ -153,3 +153,24 @@ class Repository:
             connection.execute(
                 'DELETE FROM draft_history WHERE draft_key=?',(draft_key,)
             )
+
+    def set_setting(self,key,value):
+        with self.connection() as connection:
+            connection.execute(
+                'CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY,value TEXT NOT NULL)'
+            )
+            connection.execute(
+                'INSERT INTO settings(key,value) VALUES(?,?) '
+                'ON CONFLICT(key) DO UPDATE SET value=excluded.value',
+                (key,value),
+            )
+
+    def get_setting(self,key,default=''):
+        with self.connection() as connection:
+            connection.execute(
+                'CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY,value TEXT NOT NULL)'
+            )
+            row=connection.execute(
+                'SELECT value FROM settings WHERE key=?',(key,)
+            ).fetchone()
+        return row[0] if row else default
