@@ -11,7 +11,7 @@
 <body>
   <header class="app-header">
     <div class="header-context"><span id="issueName" class="issue-filename">The Current</span></div>
-    <div class="header-actions"><button id="closeIssue" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>CLOSE ISSUE</button></div>
+    <div class="header-actions"><button id="wordpressSettings" type="button">WORDPRESS</button><button id="closeIssue" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>CLOSE ISSUE</button></div>
   </header>
   <div id="notice" role="status" hidden></div>
   <section id="welcome" class="welcome" hidden>
@@ -94,6 +94,23 @@
     <h2 id="draftHeading">WordPress draft check</h2><p id="draftSummary"></p><div id="draftChecks"></div>
     <label id="duplicateOption" class="inline-check" hidden><input id="includeDuplicate" type="checkbox">Create a separate draft for this article anyway</label>
     <button id="confirmDraft" class="primary" hidden>Create draft</button><div id="draftResult" role="status"></div>
+  </dialog>
+  <dialog id="wordpressDialog" aria-labelledby="wordpressHeading">
+    <form method="dialog"><button id="closeWordPressDialog" class="dialog-close" aria-label="Close WordPress settings">Close</button></form>
+    <h2 id="wordpressHeading">WordPress connection</h2>
+    <p>Credentials are stored securely in Windows Credential Manager. They are never returned to the editor.</p>
+    <label for="wordpressSite">WordPress HTTPS site</label>
+    <input id="wordpressSite" type="url" autocomplete="url" placeholder="https://example.org">
+    <label for="wordpressUsername">WordPress username</label>
+    <input id="wordpressUsername" autocomplete="username" placeholder="editor-username">
+    <label for="wordpressPassword">Application password</label>
+    <input id="wordpressPassword" type="password" autocomplete="current-password" placeholder="WordPress application password">
+    <div class="settings-actions">
+      <button id="testWordPress" type="button">Test connection</button>
+      <button id="saveWordPress" class="primary" type="button">Save connection</button>
+      <button id="removeWordPress" class="text-button danger" type="button">Remove credentials</button>
+    </div>
+    <p id="wordpressSettingsResult" role="status"></p>
   </dialog>
   <div id="busy" tabindex="-1" role="status" aria-live="polite" hidden><div class="busy-indicator" aria-hidden="true"></div><strong id="busyText">Working…</strong><span>Your issue stays on this computer.</span></div>
 </body>

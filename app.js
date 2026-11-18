@@ -298,6 +298,49 @@ function updateDraftButton(){
     $('confirmDraft').textContent=count===1?'Create 1 WordPress draft':`Create ${count} WordPress drafts`;
 }
 $('includeDuplicate').onchange=updateDraftButton;
+async function openWordPressSettings(){
+    const response=await fetch('/api/wordpress');
+    const settings=await response.json();
+    if(!response.ok)throw Error(settings.error||'Could not load WordPress settings.');
+    $('wordpressSite').value=settings.site||'';
+    $('wordpressUsername').value='';
+    $('wordpressPassword').value='';
+    $('wordpressSettingsResult').textContent=settings.configured?'Credentials are configured.':'WordPress is not configured.';
+    $('wordpressDialog').showModal();
+}
+$('wordpressSettings').onclick=async()=>{
+    try{await openWordPressSettings();}
+    catch(error){notify(error.message,true);}
+};
+async function saveWordPressCredentials(){
+    const site=$('wordpressSite').value.trim();
+    const username=$('wordpressUsername').value.trim();
+    const password=$('wordpressPassword').value;
+    if(!site||!username||!password){throw Error('Enter the WordPress site, username, and application password.');}
+    return api('/api/wordpress/setup',{site,username,password});
+}
+$('testWordPress').onclick=async()=>{
+    try{
+        $('wordpressSettingsResult').textContent='Testing connection…';
+        await saveWordPressCredentials();
+        $('wordpressSettingsResult').textContent='Connection verified and credentials saved.';
+    }catch(error){$('wordpressSettingsResult').textContent=error.message;}
+};
+$('saveWordPress').onclick=async()=>{
+    try{
+        const result=await saveWordPressCredentials();
+        $('wordpressSettingsResult').textContent=`Saved connection for ${result.site}.`;
+        $('wordpressPassword').value='';
+    }catch(error){$('wordpressSettingsResult').textContent=error.message;}
+};
+$('removeWordPress').onclick=async()=>{
+    try{
+        await api('/api/wordpress/remove',{});
+        $('wordpressUsername').value='';
+        $('wordpressPassword').value='';
+        $('wordpressSettingsResult').textContent='WordPress credentials removed.';
+    }catch(error){$('wordpressSettingsResult').textContent=error.message;}
+};
 $('checkArticle').onclick=()=>openDraftCheck(current()?[current()]:[],'check');
 $('draftBtn').onclick=()=>{
     const article=current();
