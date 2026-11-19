@@ -396,6 +396,12 @@ $('confirmDraft').onclick=async()=>{
 window.addEventListener('beforeunload',e=>{if(editRevision!==savedRevision){e.preventDefault();e.returnValue='';}});
 async function init(){
     await busy('Opening WordPress Drafts…',async()=>{
+        const wordpressResponse=await fetch('/api/wordpress');
+        const wordpressSettings=await wordpressResponse.json();
+        if(!wordpressResponse.ok)throw Error(wordpressSettings.error||'Could not load WordPress settings.');
+        if(!wordpressSettings.configured){
+            try{await openWordPressSettings();}catch(error){notify(error.message,true);}
+        }
         const response=await fetch('/api/issue');
         const issue=await response.json();
         if(!response.ok)throw Error(issue.error||'Could not open the INDD.');
