@@ -669,7 +669,9 @@ class Handler(BaseHTTPRequestHandler):
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=DEFAULT_PORT);parser.add_argument('--open',action='store_true');args=parser.parse_args()
     server=ThreadingHTTPServer(('127.0.0.1',args.port),Handler)
-    print(f'INDD Text Workbench: http://localhost:{args.port}',flush=True)
-    if args.open:webbrowser.open(f'http://localhost:{args.port}')
+    port=server.server_port
+    url=f'http://127.0.0.1:{port}'
+    print(f'INDD Text Workbench: {url}',flush=True)
+    if args.open:webbrowser.open(url)
     try:server.serve_forever()
     except KeyboardInterrupt:server.server_close()
