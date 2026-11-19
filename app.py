@@ -668,10 +668,19 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=DEFAULT_PORT);parser.add_argument('--open',action='store_true');args=parser.parse_args()
-    server=ThreadingHTTPServer(('127.0.0.1',args.port),Handler)
-    port=server.server_port
-    url=f'http://127.0.0.1:{port}'
-    print(f'INDD Text Workbench: {url}',flush=True)
-    if args.open:webbrowser.open(url)
-    try:server.serve_forever()
-    except KeyboardInterrupt:server.server_close()
+    server=None
+    try:
+        server=ThreadingHTTPServer(('127.0.0.1',args.port),Handler)
+        port=server.server_port
+        url=f'http://127.0.0.1:{port}'
+        print(f'INDD Text Workbench: {url}',flush=True)
+        if args.open:webbrowser.open(url)
+        server.serve_forever()
+    except OSError as error:
+        print(f'Could not start local server: {error}',flush=True)
+        raise SystemExit(1)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        if server is not None:
+            server.server_close()
