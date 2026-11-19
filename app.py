@@ -1,5 +1,5 @@
 """The Current: INDD workbench for WordPress drafts."""
-import argparse,copy,hashlib,html,json,mimetypes,re,secrets,threading,unicodedata
+import argparse,copy,hashlib,html,json,mimetypes,re,secrets,sys,threading,unicodedata
 import urllib.error,urllib.parse,uuid,webbrowser
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
@@ -10,9 +10,10 @@ from wordpress import (WordPressError, load_settings, get_credentials,
                        validate_site as validate_wordpress_site,
                        wordpress_ready)
 from storage import Repository
+from runtime import packaged_root,user_data_dir
 
 ROOT=Path(__file__).resolve().parent
-DATA=ROOT/'native-data'
+DATA=user_data_dir() if getattr(sys,'frozen',False) else ROOT/'native-data'
 DATA.mkdir(exist_ok=True)
 TOKEN=secrets.token_urlsafe(32)
 LOCK=threading.RLock()
