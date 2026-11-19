@@ -16,3 +16,7 @@ def user_data_dir(app_name='TheCurrent'):
         base=Path(os.environ['LOCALAPPDATA']) if os.environ.get('LOCALAPPDATA') else Path.home()/'.the-current'
         return base/app_name
     return packaged_root()/'native-data'
+
+
+def bundled_path(*parts):
+    return packaged_root().joinpath(*parts)
