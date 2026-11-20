@@ -627,11 +627,17 @@ class Handler(BaseHTTPRequestHandler):
             if path=='/api/taxonomy':
                 settings=wordpress_settings();result={}
                 for kind in ('categories','tags'):
+                    if 'refresh=1' not in self.path:
+                        cached=repository().taxonomy(kind)
+                        if cached:
+                            result[kind]=cached
+                            continue
                     values=[]
                     for page in range(1,101):
                         batch=wp_read(settings,kind,per_page=100,page=page,_fields='id,name,slug')
                         values.extend(batch)
                         if len(batch)<100:break
+                    repository().set_taxonomy(kind,values)
                     result[kind]=values
                 return self.send(200,result)
             return self.send(404,{'error':'Not found.'})

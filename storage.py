@@ -154,6 +154,27 @@ class Repository:
                 'DELETE FROM draft_history WHERE draft_key=?',(draft_key,)
             )
 
+    def set_taxonomy(self,kind,values):
+        with self.connection() as connection:
+            connection.execute(
+                'CREATE TABLE IF NOT EXISTS taxonomy (kind TEXT PRIMARY KEY,value_json TEXT NOT NULL,updated_at TEXT NOT NULL)'
+            )
+            connection.execute(
+                'INSERT INTO taxonomy(kind,value_json,updated_at) VALUES(?,?,CURRENT_TIMESTAMP) '
+                'ON CONFLICT(kind) DO UPDATE SET value_json=excluded.value_json,updated_at=CURRENT_TIMESTAMP',
+                (kind,json.dumps(values,ensure_ascii=False)),
+            )
+
+    def taxonomy(self,kind):
+        with self.connection() as connection:
+            connection.execute(
+                'CREATE TABLE IF NOT EXISTS taxonomy (kind TEXT PRIMARY KEY,value_json TEXT NOT NULL,updated_at TEXT NOT NULL)'
+            )
+            row=connection.execute(
+                'SELECT value_json FROM taxonomy WHERE kind=?',(kind,)
+            ).fetchone()
+        return json.loads(row[0]) if row else []
+
     def set_setting(self,key,value):
         with self.connection() as connection:
             connection.execute(
