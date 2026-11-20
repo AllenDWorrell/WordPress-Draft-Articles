@@ -386,6 +386,10 @@ class WorkbenchTests(unittest.TestCase):
         with patch.object(app,'wp_request') as request:
             with self.assertRaisesRegex(ValueError,'Only articles'):app.create_draft(self.p,self.a['id'],self.c)
             request.assert_not_called()
+    def test_api_contract_rejects_arrays_and_missing_fields(self):
+        self.assertRaisesRegex(ValueError,'object',lambda:app.require_object([]))
+        self.assertRaisesRegex(ValueError,'job_id',lambda:app.require_fields({},'job_id'))
+
     def test_active_issue_rejects_stale_issue_requests(self):
         app.set_active_issue(self.sid)
         with self.assertRaisesRegex(ValueError,'no longer open'):

@@ -45,6 +45,17 @@ def wordpress_settings():
 
 def uid():return uuid.uuid4().hex
 
+def require_object(data):
+    if not isinstance(data,dict):
+        raise ValueError('Request JSON must be an object.')
+    return data
+
+def require_fields(data,*fields):
+    missing=[field for field in fields if field not in data]
+    if missing:
+        raise ValueError('Missing required field: '+', '.join(missing))
+    return data
+
 def author_slug(value):
     value=unicodedata.normalize('NFKD',str(value)).encode('ascii','ignore').decode('ascii').lower()
     return re.sub(r'[^a-z0-9]+','-',value).strip('-')
@@ -656,13 +667,15 @@ class Handler(BaseHTTPRequestHandler):
                         raise ValueError('Close the open INDD before choosing another file.')
                     job_id=start_import_job(raw,urllib.parse.unquote(self.headers.get('X-Filename','issue.indd')))
                     return self.send(202,dict(job_id=job_id,state='running'))
-                data=json.loads(raw)
+                data=require_object(json.loads(raw))
                 if self.path=='/api/save':
                     require_active_issue(data.get('id'))
                     result=save_edits(data)
                 elif self.path=='/api/import/cancel':
+                    require_fields(data,'job_id')
                     result=cancel_import_job(data.get('job_id',''))
                 elif self.path=='/api/wordpress/setup':
+                    require_fields(data,'site','username','password')
                     save_credentials(data.get('site',''),data.get('username',''),data.get('password',''))
                     repository().set_setting('wordpress_site',data['site'].strip().rstrip('/'))
                     settings=wordpress_settings()
