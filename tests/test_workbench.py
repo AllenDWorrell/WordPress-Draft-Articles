@@ -386,6 +386,11 @@ class WorkbenchTests(unittest.TestCase):
         with patch.object(app,'wp_request') as request:
             with self.assertRaisesRegex(ValueError,'Only articles'):app.create_draft(self.p,self.a['id'],self.c)
             request.assert_not_called()
+    def test_active_issue_rejects_stale_issue_requests(self):
+        app.set_active_issue(self.sid)
+        with self.assertRaisesRegex(ValueError,'no longer open'):
+            app.require_active_issue('b'*32)
+
     def test_upgrade_resumes_saved_issue_with_articles(self):
         empty_id='b'*32;(app.DATA/empty_id).mkdir()
         app.save(dict(id=empty_id,name='Empty issue',articles=[]))
