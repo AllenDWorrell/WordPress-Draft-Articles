@@ -209,7 +209,7 @@ async function mount(){
     const message=prepared.suggested?`${prepared.suggested} categories suggested`:'';
     notify([message,prepared.warning].filter(Boolean).join('. '),!!prepared.warning);
 }
-async function upload(file){if(!file)return;await busy('Verifying INDD and recovering the full issue…',async()=>{const response=await fetch('/api/indd',{method:'POST',headers:{'Content-Type':'application/octet-stream','X-Filename':encodeURIComponent(file.name),'X-Workbench-Token':token},body:file});const result=await response.json();if(!response.ok)throw Error(result.error);project=result;await mount();});}
+async function upload(file){if(!file)return;await busy('Verifying INDD and recovering the full issue…',async()=>{const response=await fetch('/api/indd',{method:'POST',headers:{'Content-Type':'application/octet-stream','X-Filename':encodeURIComponent(file.name),'X-Workbench-Token':token},body:file});const started=await response.json();if(!response.ok)throw Error(started.error);while(true){await new Promise(resolve=>setTimeout(resolve,250));const statusResponse=await fetch(`/api/import/status?job=${encodeURIComponent(started.job_id)}`);const status=await statusResponse.json();if(!statusResponse.ok)throw Error(status.error);if(status.state==='running')continue;if(status.state==='failed')throw Error(status.error);project=status.project;await mount();break;}});}
 for(const [id,key] of [['title','title']])$(id).oninput=()=>{if(current()){current()[key]=$(id).value;changed();}};
 $('bodyPreview').onclick=openBodySource;
 $('bodyPreview').onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openBodySource();}};

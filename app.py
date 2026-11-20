@@ -17,6 +17,7 @@ DATA=user_data_dir() if getattr(sys,'frozen',False) else ROOT/'native-data'
 DATA.mkdir(exist_ok=True)
 TOKEN=secrets.token_urlsafe(32)
 LOCK=threading.RLock()
+IMPORT_JOBS={}
 DEFAULT_PORT=3000
 DEFAULT_SITE='https://sites.nova.edu/mako-media-network'
 _REPOSITORY=None
@@ -195,6 +196,25 @@ def active_issue_id():
 def require_active_issue(issue_id):
     if not issue_id or issue_id != active_issue_id():
         raise ValueError('This INDD is no longer open. Refresh the app to continue.')
+
+def start_import_job(raw,name):
+    job_id=uid()
+    IMPORT_JOBS[job_id]=dict(state='running',progress='Verifying INDD')
+    def run():
+        try:
+            with LOCK:
+                project=import_indd(raw,name)
+            IMPORT_JOBS[job_id]=dict(state='done',project=project)
+        except Exception as error:
+            IMPORT_JOBS[job_id]=dict(state='failed',error=str(error))
+    threading.Thread(target=run,name='INDD import',daemon=True).start()
+    return job_id
+
+def import_job_status(job_id):
+    job=IMPORT_JOBS.get(job_id)
+    if not job:
+        raise ValueError('Unknown import job.')
+    return job.copy()
 
 def import_indd(raw,name):
     if active_issue_id():
@@ -582,6 +602,9 @@ class Handler(BaseHTTPRequestHandler):
                     issue_id = active_issue_id()
                     project = load(issue_id) if issue_id else None
                 return self.send(200, dict(project=project))
+            if path=='/api/import/status':
+                job_id=urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get('job',[''])[0]
+                return self.send(200,import_job_status(job_id))
             if path=='/api/wordpress':
                 settings = wordpress_settings()
                 validate_wordpress_site(settings['site'])
@@ -607,7 +630,11 @@ class Handler(BaseHTTPRequestHandler):
             if not 0<length<=100*1024*1024:raise ValueError('Request must be under 100 MB.')
             raw=self.rfile.read(length)
             with LOCK:
-                if self.path=='/api/indd':return self.send(200,import_indd(raw,urllib.parse.unquote(self.headers.get('X-Filename','issue.indd'))))
+                if self.path=='/api/indd':
+                    if active_issue_id():
+                        raise ValueError('Close the open INDD before choosing another file.')
+                    job_id=start_import_job(raw,urllib.parse.unquote(self.headers.get('X-Filename','issue.indd')))
+                    return self.send(202,dict(job_id=job_id,state='running'))
                 data=json.loads(raw)
                 if self.path=='/api/save':
                     require_active_issue(data.get('id'))

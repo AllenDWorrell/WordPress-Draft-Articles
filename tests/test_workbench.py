@@ -426,10 +426,23 @@ class WorkbenchTests(unittest.TestCase):
                 status, result = post(path, payload)
                 self.assertEqual(status, 400)
                 self.assertIn('no longer open', result['error'])
-            self.assertEqual(post('/api/indd', b'unsupported file')[0], 400)
+            status, result = post('/api/indd', b'unsupported file')
+            self.assertEqual(status,202)
+            import time
+            for _ in range(40):
+                job=app.import_job_status(result['job_id'])
+                if job['state']!='running':break
+                time.sleep(.025)
+            self.assertEqual(job['state'],'failed')
             self.assertEqual(get('/api/issue'), (200, dict(project=None)))
             status, result = post('/api/indd', raw)
-            self.assertEqual(status, 200)
+            self.assertEqual(status,202)
+            for _ in range(40):
+                job=app.import_job_status(result['job_id'])
+                if job['state']!='running':break
+                time.sleep(.025)
+            self.assertEqual(job['state'],'done')
+            result=job['project']
             self.assertEqual(result['id'], self.sid)
             self.assertEqual(result['articles'][0]['title'], 'Saved headline')
 
