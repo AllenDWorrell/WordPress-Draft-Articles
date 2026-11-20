@@ -45,6 +45,16 @@ class WorkbenchTests(unittest.TestCase):
             self.assertEqual(credentials['password'],'abcd efgh')
             wordpress.delete_credentials()
             self.assertFalse(wordpress.credential_status()['configured'])
+    def test_duplicate_import_job_is_reused_and_cancelled(self):
+        raw=b'import-data'
+        app.IMPORT_JOBS.clear()
+        with patch.object(app,'import_indd',side_effect=lambda raw,name:(__import__('time').sleep(.1),dict(id='a'*32))[1]):
+            first=app.start_import_job(raw,'Issue.indd')
+            second=app.start_import_job(raw,'Issue.indd')
+            self.assertEqual(first,second)
+            result=app.cancel_import_job(first)
+        self.assertEqual(result['state'],'cancelled')
+
     def test_author_prefix_queries_wordpress_and_keeps_account_slug(self):
         user = dict(id=182, name='Allen Worrell', username='aw2362', slug='allen-worrell',
                     link='https://example.org/news/author/allen-worrell/')

@@ -199,14 +199,20 @@ def require_active_issue(issue_id):
 
 def start_import_job(raw,name):
     job_id=uid()
-    IMPORT_JOBS[job_id]=dict(state='running',progress='Verifying INDD')
+    digest=hashlib.sha256(raw).hexdigest()
+    for existing in IMPORT_JOBS.values():
+        if existing.get('digest')==digest and existing.get('state')=='running':
+            return existing['job_id']
+    IMPORT_JOBS[job_id]=dict(job_id=job_id,state='running',progress='Verifying INDD',digest=digest)
     def run():
         try:
             with LOCK:
                 project=import_indd(raw,name)
-            IMPORT_JOBS[job_id]=dict(state='done',project=project)
+            if IMPORT_JOBS[job_id].get('state')=='cancelled':
+                return
+            IMPORT_JOBS[job_id]=dict(job_id=job_id,state='done',project=project,digest=digest)
         except Exception as error:
-            IMPORT_JOBS[job_id]=dict(state='failed',error=str(error))
+            IMPORT_JOBS[job_id]=dict(job_id=job_id,state='failed',error=str(error),digest=digest)
     threading.Thread(target=run,name='INDD import',daemon=True).start()
     return job_id
 
@@ -214,6 +220,15 @@ def import_job_status(job_id):
     job=IMPORT_JOBS.get(job_id)
     if not job:
         raise ValueError('Unknown import job.')
+    return job.copy()
+
+def cancel_import_job(job_id):
+    job=IMPORT_JOBS.get(job_id)
+    if not job:
+        raise ValueError('Unknown import job.')
+    if job['state']=='running':
+        job['state']='cancelled'
+        job['progress']='Import cancelled'
     return job.copy()
 
 def import_indd(raw,name):
@@ -639,6 +654,8 @@ class Handler(BaseHTTPRequestHandler):
                 if self.path=='/api/save':
                     require_active_issue(data.get('id'))
                     result=save_edits(data)
+                elif self.path=='/api/import/cancel':
+                    result=cancel_import_job(data.get('job_id',''))
                 elif self.path=='/api/wordpress/setup':
                     save_credentials(data.get('site',''),data.get('username',''),data.get('password',''))
                     repository().set_setting('wordpress_site',data['site'].strip().rstrip('/'))
