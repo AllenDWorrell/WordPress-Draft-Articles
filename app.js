@@ -91,8 +91,8 @@ async function busy(message,fn){
 }
 function syncDefaultTags(a){a.tags??=[];if(a.default_tags_version!==1){if(!a.tags.some(t=>t.toLowerCase()==='add-about'))a.tags.push('add-about');a.default_tags_version=1;}const previous=a.default_author_names||[],names=[...new Set(a.authors.map(p=>p.name?.trim()).filter(Boolean))],old=new Set(previous.map(n=>n.toLowerCase())),now=new Set(names.map(n=>n.toLowerCase())),stale=new Set(previous.filter(n=>!now.has(n.toLowerCase())).map(n=>'posts by '+n.toLowerCase()));a.tags=a.tags.filter(t=>!stale.has(t.toLowerCase()));for(const name of names){const label='Posts By '+name;if(!old.has(name.toLowerCase())&&!a.tags.some(t=>t.toLowerCase()===label.toLowerCase()))a.tags.push(label);}a.default_author_names=names;}
 function syncTags(a){syncDefaultTags(a);const old=new Set(a.generated_author_tags||[]);a.tags=(a.tags||[]).filter(t=>!old.has(t));a.generated_author_tags=a.auto_author_tags===false?[]:[...new Set(a.authors.filter(p=>p.name?.trim()).map(p=>'coauthor-'+slug(p.name)))];a.tags=[...new Set([...a.tags,...a.generated_author_tags])];if(a===current())$('tags').value=a.tags.join(', ');}
-function changed(){if(!current())return;current().reviewed=false;$('reviewed').checked=false;queueSave();renderList();renderInspector();}
-function queueSave(){editRevision++;clearTimeout(saveTimer);$('saveState').textContent='Unsaved changes';saveTimer=setTimeout(()=>saveNow().catch(e=>notify(`Could not save. ${e.message} Keep this tab open and try again.`,true)),650);}
+function changed(){if(!current())return;current().reviewed=false;$('reviewed').checked=false;appState='dirty';queueSave();renderList();renderInspector();}
+function queueSave(){editRevision++;appState='dirty';clearTimeout(saveTimer);$('saveState').textContent='Unsaved changes';saveTimer=setTimeout(()=>saveNow().catch(e=>notify(`Could not save. ${e.message} Keep this tab open and try again.`,true)),650);}
 async function saveNow(){
     clearTimeout(saveTimer);if(!project)return;
     appState='saving';
