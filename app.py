@@ -635,6 +635,8 @@ class Handler(BaseHTTPRequestHandler):
                 settings = wordpress_settings()
                 validate_wordpress_site(settings['site'])
                 return self.send(200,dict(site=settings['site'],configured=wordpress_ready(settings)))
+            if path=='/api/backups':
+                return self.send(200,dict(backups=repository().backups()))
             if path=='/api/taxonomy':
                 settings=wordpress_settings();result={}
                 for kind in ('categories','tags'):
@@ -671,6 +673,12 @@ class Handler(BaseHTTPRequestHandler):
                 if self.path=='/api/save':
                     require_active_issue(data.get('id'))
                     result=save_edits(data)
+                elif self.path=='/api/backup':
+                    result=dict(backup=str(repository().create_backup()))
+                elif self.path=='/api/restore':
+                    require_fields(data,'backup')
+                    repository().restore_backup(data['backup'])
+                    result=dict(restored=True)
                 elif self.path=='/api/import/cancel':
                     require_fields(data,'job_id')
                     result=cancel_import_job(data.get('job_id',''))

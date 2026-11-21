@@ -1,5 +1,6 @@
 """Local SQLite persistence for issues, active state, and draft history."""
 import json
+import shutil
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
@@ -174,6 +175,31 @@ class Repository:
                 'SELECT value_json FROM taxonomy WHERE kind=?',(kind,)
             ).fetchone()
         return json.loads(row[0]) if row else []
+
+    def create_backup(self):
+        backup_dir=self.root/'backups'
+        backup_dir.mkdir(parents=True,exist_ok=True)
+        stamp=__import__('datetime').datetime.now().strftime('%Y%m%d-%H%M%S')
+        target=backup_dir/f'the-current-{stamp}.db'
+        with self.connection() as source:
+            destination=sqlite3.connect(target)
+            try:
+                source.backup(destination)
+            finally:
+                destination.close()
+        return target
+
+    def backups(self):
+        backup_dir=self.root/'backups'
+        if not backup_dir.exists():
+            return []
+        return sorted((str(path) for path in backup_dir.glob('the-current-*.db')),reverse=True)
+
+    def restore_backup(self,backup_path):
+        source=Path(backup_path)
+        if not source.is_file() or source.parent != self.root/'backups':
+            raise ValueError('Backup file not found.')
+        shutil.copy2(source,self.path)
 
     def set_setting(self,key,value):
         with self.connection() as connection:

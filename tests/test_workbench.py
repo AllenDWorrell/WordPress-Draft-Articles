@@ -386,6 +386,11 @@ class WorkbenchTests(unittest.TestCase):
         with patch.object(app,'wp_request') as request:
             with self.assertRaisesRegex(ValueError,'Only articles'):app.create_draft(self.p,self.a['id'],self.c)
             request.assert_not_called()
+    def test_sqlite_backup_is_created_and_listed(self):
+        backup=app.repository().create_backup()
+        self.assertTrue(Path(backup).is_file())
+        self.assertIn(str(backup),app.repository().backups())
+
     def test_consecutive_repository_saves_preserve_latest_project(self):
         first=copy.deepcopy(self.p)
         first['articles'][0]['title']='First title'
