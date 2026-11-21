@@ -3,6 +3,7 @@ const token=document.querySelector('meta[name="workbench-token"]').content;
 let project=null,selectedId=null,saveTimer,saveQueue=Promise.resolve();
 let draftPlan=null,drafting=false;
 let editRevision=0,savedRevision=0,busyDepth=0;
+let appState='idle';
 let queueQuery='',queueFilter='all';
 let wordpressSite='https://sites.nova.edu/mako-media-network';
 let taxonomy={categories:[],tags:[]};
@@ -81,11 +82,12 @@ function notify(message,error=false){$('notice').textContent=message;$('notice')
 async function api(path,data){const response=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Workbench-Token':token},body:JSON.stringify(data)});const result=await response.json();if(!response.ok)throw Error(result.error||'Request failed.');return result;}
 async function busy(message,fn){
     const previousFocus=document.activeElement;
+    appState='busy';
     const regions=[document.querySelector('header'),$('welcome'),$('workspace'),$('draftDialog')];
     $('busyText').textContent=message;
     if(!busyDepth++){regions.forEach(region=>region.inert=true);$('busy').hidden=false;$('busy').focus();}
     try{return await fn();}catch(e){notify(e.message,true);return null;}
-    finally{if(!--busyDepth){$('busy').hidden=true;regions.forEach(region=>region.inert=false);if(previousFocus?.isConnected)previousFocus.focus({preventScroll:true});}}
+    finally{if(!--busyDepth){appState='idle';$('busy').hidden=true;regions.forEach(region=>region.inert=false);if(previousFocus?.isConnected)previousFocus.focus({preventScroll:true});}}
 }
 function syncDefaultTags(a){a.tags??=[];if(a.default_tags_version!==1){if(!a.tags.some(t=>t.toLowerCase()==='add-about'))a.tags.push('add-about');a.default_tags_version=1;}const previous=a.default_author_names||[],names=[...new Set(a.authors.map(p=>p.name?.trim()).filter(Boolean))],old=new Set(previous.map(n=>n.toLowerCase())),now=new Set(names.map(n=>n.toLowerCase())),stale=new Set(previous.filter(n=>!now.has(n.toLowerCase())).map(n=>'posts by '+n.toLowerCase()));a.tags=a.tags.filter(t=>!stale.has(t.toLowerCase()));for(const name of names){const label='Posts By '+name;if(!old.has(name.toLowerCase())&&!a.tags.some(t=>t.toLowerCase()===label.toLowerCase()))a.tags.push(label);}a.default_author_names=names;}
 function syncTags(a){syncDefaultTags(a);const old=new Set(a.generated_author_tags||[]);a.tags=(a.tags||[]).filter(t=>!old.has(t));a.generated_author_tags=a.auto_author_tags===false?[]:[...new Set(a.authors.filter(p=>p.name?.trim()).map(p=>'coauthor-'+slug(p.name)))];a.tags=[...new Set([...a.tags,...a.generated_author_tags])];if(a===current())$('tags').value=a.tags.join(', ');}
@@ -93,11 +95,12 @@ function changed(){if(!current())return;current().reviewed=false;$('reviewed').c
 function queueSave(){editRevision++;clearTimeout(saveTimer);$('saveState').textContent='Unsaved changes';saveTimer=setTimeout(()=>saveNow().catch(e=>notify(`Could not save. ${e.message} Keep this tab open and try again.`,true)),650);}
 async function saveNow(){
     clearTimeout(saveTimer);if(!project)return;
+    appState='saving';
     for(const a of project.articles)syncTags(a);
     const snapshot=structuredClone(project),revision=editRevision;
     const request=saveQueue.catch(()=>{}).then(()=>api('/api/save',snapshot));saveQueue=request;
-    try{await request;savedRevision=Math.max(savedRevision,revision);if(revision===editRevision)$('saveState').textContent='Saved locally';}
-    catch(error){$('saveState').textContent='Save failed — changes remain in this tab';throw error;}
+    try{await request;savedRevision=Math.max(savedRevision,revision);appState='idle';if(revision===editRevision)$('saveState').textContent='Saved locally';}
+    catch(error){appState='save-failed';$('saveState').textContent='Save failed — changes remain in this tab';throw error;}
 }
 function renderList(){
   if(!project)return;
