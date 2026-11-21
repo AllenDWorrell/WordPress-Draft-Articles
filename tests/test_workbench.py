@@ -386,6 +386,15 @@ class WorkbenchTests(unittest.TestCase):
         with patch.object(app,'wp_request') as request:
             with self.assertRaisesRegex(ValueError,'Only articles'):app.create_draft(self.p,self.a['id'],self.c)
             request.assert_not_called()
+    def test_consecutive_repository_saves_preserve_latest_project(self):
+        first=copy.deepcopy(self.p)
+        first['articles'][0]['title']='First title'
+        app.save(first)
+        second=copy.deepcopy(first)
+        second['articles'][0]['title']='Latest title'
+        app.save(second)
+        self.assertEqual(app.load(self.sid)['articles'][0]['title'],'Latest title')
+
     def test_api_contract_rejects_arrays_and_missing_fields(self):
         self.assertRaisesRegex(ValueError,'object',lambda:app.require_object([]))
         self.assertRaisesRegex(ValueError,'job_id',lambda:app.require_fields({},'job_id'))
