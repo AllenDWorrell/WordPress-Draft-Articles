@@ -386,6 +386,13 @@ class WorkbenchTests(unittest.TestCase):
         with patch.object(app,'wp_request') as request:
             with self.assertRaisesRegex(ValueError,'Only articles'):app.create_draft(self.p,self.a['id'],self.c)
             request.assert_not_called()
+    def test_application_log_redacts_credentials(self):
+        from app_logging import redact
+        text=redact('Authorization: Basic abc123 password=supersecret')
+        self.assertIn('[REDACTED]',text)
+        self.assertNotIn('abc123',text)
+        self.assertNotIn('supersecret',text)
+
     def test_sqlite_backup_is_created_and_listed(self):
         backup=app.repository().create_backup()
         self.assertTrue(Path(backup).is_file())

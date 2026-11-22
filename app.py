@@ -11,10 +11,12 @@ from wordpress import (WordPressError, load_settings, get_credentials,
                        wordpress_ready)
 from storage import Repository
 from runtime import bundled_path,packaged_root,user_data_dir
+from app_logging import configure as configure_logging,redact
 
 ROOT=packaged_root()
 DATA=user_data_dir() if getattr(sys,'frozen',False) else ROOT/'native-data'
 DATA.mkdir(exist_ok=True)
+APP_LOGGER=configure_logging(DATA)
 TOKEN=secrets.token_urlsafe(32)
 LOCK=threading.RLock()
 IMPORT_JOBS={}
@@ -654,7 +656,9 @@ class Handler(BaseHTTPRequestHandler):
                     result[kind]=values
                 return self.send(200,result)
             return self.send(404,{'error':'Not found.'})
-        except Exception as ex:self.send(400,{'error':str(ex)})
+        except Exception as ex:
+            APP_LOGGER.warning(redact(f'GET {path}: {ex}'))
+            self.send(400,{'error':str(ex)})
     def do_POST(self):
         if not self.trusted() or self.headers.get('X-Workbench-Token')!=TOKEN:return self.send(403,{'error':'Reload this local app to continue.'})
         origin=self.headers.get('Origin')
@@ -735,7 +739,9 @@ class Handler(BaseHTTPRequestHandler):
                         result = create_draft(project, data['article_id'], settings, payload)
                 else:return self.send(404,{'error':'Not found.'})
             self.send(200,result)
-        except Exception as ex:self.send(400,{'error':str(ex)})
+        except Exception as ex:
+            APP_LOGGER.warning(redact(f'POST {self.path}: {ex}'))
+            self.send(400,{'error':str(ex)})
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=DEFAULT_PORT);parser.add_argument('--open',action='store_true');args=parser.parse_args()
