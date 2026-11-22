@@ -637,6 +637,16 @@ class Handler(BaseHTTPRequestHandler):
                 settings = wordpress_settings()
                 validate_wordpress_site(settings['site'])
                 return self.send(200,dict(site=settings['site'],configured=wordpress_ready(settings)))
+            if path=='/api/health':
+                settings=wordpress_settings()
+                reader=(ROOT/'tools'/'indd.exe')
+                return self.send(200,dict(
+                    database=repository().path.exists(),
+                    reader=reader.is_file(),
+                    wordpress=wordpress_ready(settings),
+                    active_issue=active_issue_id(),
+                    log_directory=(DATA/'logs').is_dir(),
+                ))
             if path=='/api/backups':
                 return self.send(200,dict(backups=repository().backups()))
             if path=='/api/taxonomy':

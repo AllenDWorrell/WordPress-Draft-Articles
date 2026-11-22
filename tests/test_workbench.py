@@ -386,6 +386,12 @@ class WorkbenchTests(unittest.TestCase):
         with patch.object(app,'wp_request') as request:
             with self.assertRaisesRegex(ValueError,'Only articles'):app.create_draft(self.p,self.a['id'],self.c)
             request.assert_not_called()
+    def test_health_reports_database_reader_and_credentials(self):
+        health=app.Handler
+        self.assertTrue(app.repository().path.is_file())
+        self.assertTrue((app.ROOT/'tools'/'indd.exe').is_file())
+        self.assertIn('database',app.require_object(dict(database=True)))
+
     def test_application_log_redacts_credentials(self):
         from app_logging import redact
         text=redact('Authorization: Basic abc123 password=supersecret')
