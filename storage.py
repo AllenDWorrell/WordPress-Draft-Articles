@@ -35,6 +35,19 @@ class Repository:
             connection.close()
 
     def _initialize(self):
+        prior=None
+        if self.path.exists():
+            existing=sqlite3.connect(self.path)
+            try:
+                prior=existing.execute(
+                    'SELECT value FROM schema_meta WHERE key=?',('schema_version',)
+                ).fetchone()
+            except sqlite3.Error:
+                prior=None
+            finally:
+                existing.close()
+            if prior and prior[0]!=str(SCHEMA_VERSION):
+                self.create_backup()
         with self.connection() as connection:
             connection.executescript("""
                 CREATE TABLE IF NOT EXISTS schema_meta (
