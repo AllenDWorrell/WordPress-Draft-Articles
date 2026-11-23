@@ -35,9 +35,19 @@ Successful drafts leave the review queue and the next article opens. Failed or u
 
 Changes save automatically under **native-data/**. Original recovered text and completed draft records remain local. Non-article material from earlier versions is preserved internally but is absent from the article queue and cannot be sent as a draft.
 
-The local server reads credentials from **.env** and keeps them out of the browser. Keep that file private. The server listens only on 127.0.0.1. WordPress access depends on the site’s permissions and application-password policy. There is no publish operation.
+The local server reads credentials from Windows Credential Manager for packaged builds and may use a local **.env** only as a legacy development fallback. Keep the fallback private. The server listens only on 127.0.0.1. WordPress access depends on the site’s permissions and application-password policy. There is no publish operation.
 
 The verified Vol. 37, Issue 4 import supplies 15 article entries. Other INDD files are read using the bundled reader and can need manual review to exclude non-article text.
+
+## Runtime layout
+
+The source and package resources remain read-only application assets:
+
+- The EXE, HTML, CSS, JavaScript, fonts, and INDD reader are packaged resources.
+- Mutable SQLite data, backups, logs, active state, and cached taxonomy live under the Windows per-user LocalAppData directory.
+- `THE_CURRENT_DATA_DIR` is available for tests or administrator-controlled deployments.
+- Credentials are stored in Windows Credential Manager, not in SQLite or `.env`.
+- Uninstalling the app should preserve editorial data unless the user explicitly chooses to remove it.
 
 ## Verification
 
