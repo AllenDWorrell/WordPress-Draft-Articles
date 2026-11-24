@@ -1,10 +1,13 @@
 """WordPress REST adapter and local credential loading."""
 import base64
 import json
+import os
 import re
 import urllib.error
 import urllib.parse
 import urllib.request
+import ctypes
+from ctypes import wintypes
 from pathlib import Path
 
 try:
@@ -16,6 +19,83 @@ except ImportError:
 KEYRING_SERVICE='The Current - WordPress'
 USERNAME_KEY='username'
 PASSWORD_KEY='application-password'
+CRED_TYPE_GENERIC=1
+CRED_PERSIST_LOCAL_MACHINE=2
+
+
+class FILETIME(ctypes.Structure):
+    _fields_=[('dwLowDateTime',wintypes.DWORD),
+              ('dwHighDateTime',wintypes.DWORD)]
+
+
+class CREDENTIAL(ctypes.Structure):
+    _fields_=[('Flags',wintypes.DWORD),
+              ('Type',wintypes.DWORD),
+              ('TargetName',wintypes.LPWSTR),
+              ('Comment',wintypes.LPWSTR),
+              ('LastWritten',FILETIME),
+              ('CredentialBlobSize',wintypes.DWORD),
+              ('CredentialBlob',ctypes.POINTER(wintypes.BYTE)),
+              ('Persist',wintypes.DWORD),
+              ('AttributeCount',wintypes.DWORD),
+              ('Attributes',ctypes.c_void_p),
+              ('TargetAlias',wintypes.LPWSTR),
+              ('UserName',wintypes.LPWSTR)]
+
+
+def windows_supported():
+    return os.name=='nt' and hasattr(ctypes,'windll')
+
+
+def credential_target(key):
+    return f'{KEYRING_SERVICE}/{key}'
+
+
+def windows_credential_read(key):
+    if not windows_supported():
+        return ''
+    advapi32=ctypes.windll.Advapi32
+    advapi32.CredReadW.argtypes=[wintypes.LPCWSTR,wintypes.DWORD,wintypes.DWORD,
+                                 ctypes.POINTER(ctypes.POINTER(CREDENTIAL))]
+    advapi32.CredReadW.restype=wintypes.BOOL
+    advapi32.CredFree.argtypes=[ctypes.c_void_p]
+    advapi32.CredFree.restype=None
+    credential=ctypes.POINTER(CREDENTIAL)()
+    if not advapi32.CredReadW(credential_target(key),CRED_TYPE_GENERIC,0,
+                              ctypes.byref(credential)):
+        return ''
+    try:
+        size=credential.contents.CredentialBlobSize
+        blob=ctypes.string_at(credential.contents.CredentialBlob,size)
+        return blob.decode('utf-16-le')
+    finally:
+        advapi32.CredFree(credential)
+
+
+def windows_credential_write(key,value):
+    if not windows_supported():
+        raise ValueError('Windows Credential Manager is unavailable on this system.')
+    blob=value.encode('utf-16-le')
+    buffer=(wintypes.BYTE * len(blob)).from_buffer_copy(blob)
+    credential=CREDENTIAL(
+        0,CRED_TYPE_GENERIC,credential_target(key),None,FILETIME(),
+        len(blob),ctypes.cast(buffer,ctypes.POINTER(wintypes.BYTE)),
+        CRED_PERSIST_LOCAL_MACHINE,0,None,None,None,
+    )
+    advapi32=ctypes.windll.Advapi32
+    advapi32.CredWriteW.argtypes=[ctypes.POINTER(CREDENTIAL),wintypes.DWORD]
+    advapi32.CredWriteW.restype=wintypes.BOOL
+    if not advapi32.CredWriteW(ctypes.byref(credential),0):
+        raise ctypes.WinError()
+
+
+def windows_credential_delete(key):
+    if not windows_supported():
+        return
+    advapi32=ctypes.windll.Advapi32
+    advapi32.CredDeleteW.argtypes=[wintypes.LPCWSTR,wintypes.DWORD,wintypes.DWORD]
+    advapi32.CredDeleteW.restype=wintypes.BOOL
+    advapi32.CredDeleteW(credential_target(key),CRED_TYPE_GENERIC,0)
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -55,13 +135,19 @@ def wordpress_ready(settings):
 
 
 def credential_status():
-    if keyring is None:
-        return dict(configured=False,backend_available=False)
+    if keyring is not None:
+        try:
+            username=keyring.get_password(KEYRING_SERVICE,USERNAME_KEY) or ''
+            password=keyring.get_password(KEYRING_SERVICE,PASSWORD_KEY) or ''
+            return dict(configured=bool(username and password.replace(' ','')),
+                        backend_available=True)
+        except Exception:
+            pass
     try:
-        username=keyring.get_password(KEYRING_SERVICE,USERNAME_KEY) or ''
-        password=keyring.get_password(KEYRING_SERVICE,PASSWORD_KEY) or ''
+        username=windows_credential_read(USERNAME_KEY)
+        password=windows_credential_read(PASSWORD_KEY)
         return dict(configured=bool(username and password.replace(' ','')),
-                    backend_available=True)
+                    backend_available=bool(windows_supported()))
     except Exception:
         return dict(configured=False,backend_available=False)
 
@@ -71,37 +157,50 @@ def get_credentials(default_site):
     if not status['backend_available']:
         return dict(site=default_site,username='',password='')
     try:
-        username=keyring.get_password(KEYRING_SERVICE,USERNAME_KEY) or ''
-        password=keyring.get_password(KEYRING_SERVICE,PASSWORD_KEY) or ''
+        if keyring is not None:
+            username=keyring.get_password(KEYRING_SERVICE,USERNAME_KEY) or ''
+            password=keyring.get_password(KEYRING_SERVICE,PASSWORD_KEY) or ''
+        else:
+            username=windows_credential_read(USERNAME_KEY)
+            password=windows_credential_read(PASSWORD_KEY)
     except Exception:
-        return dict(site=default_site,username='',password='')
+        username=windows_credential_read(USERNAME_KEY)
+        password=windows_credential_read(PASSWORD_KEY)
     return dict(site=default_site,username=username,password=password)
 
 
 def save_credentials(site,username,password):
-    if keyring is None:
-        raise ValueError('Windows Credential Manager support is unavailable.')
     site=(site or '').strip().rstrip('/')
     validate_site(site)
     username=username.strip()
     password=password.strip()
     if not username or not password.replace(' ',''):
         raise ValueError('Enter both a WordPress username and application password.')
+    if keyring is not None:
+        try:
+            keyring.set_password(KEYRING_SERVICE,USERNAME_KEY,username)
+            keyring.set_password(KEYRING_SERVICE,PASSWORD_KEY,password)
+            return
+        except Exception:
+            pass
     try:
-        keyring.set_password(KEYRING_SERVICE,USERNAME_KEY,username)
-        keyring.set_password(KEYRING_SERVICE,PASSWORD_KEY,password)
+        windows_credential_write(USERNAME_KEY,username)
+        windows_credential_write(PASSWORD_KEY,password)
     except Exception as error:
         raise ValueError('Could not store credentials in Windows Credential Manager.') from error
 
 
 def delete_credentials():
     if keyring is None:
-        return
-    for key in (PASSWORD_KEY,USERNAME_KEY):
-        try:
-            keyring.delete_password(KEYRING_SERVICE,key)
-        except Exception:
-            pass
+        pass
+    else:
+        for key in (PASSWORD_KEY,USERNAME_KEY):
+            try:
+                keyring.delete_password(KEYRING_SERVICE,key)
+            except Exception:
+                pass
+    windows_credential_delete(USERNAME_KEY)
+    windows_credential_delete(PASSWORD_KEY)
 
 
 def validate_site(site):
