@@ -11,14 +11,26 @@ function harness() {
   const requests = [];
   let timerId = 0;
   const document = { activeElement: null };
+  document.createElement = tag => ({
+    tagName: tag.toUpperCase(),
+    textContent: '',
+    innerHTML: '',
+    className: '',
+    children: [],
+    childNodes: [],
+    append(...nodes) { this.children.push(...nodes); },
+  });
   function element(id) {
     if (elements.has(id)) return elements.get(id);
     const node = {
       textContent: '', hidden: false, dataset: {}, attributes: {}, children: [],
       addEventListener() {},
+      append(...nodes) { this.children.push(...nodes); },
+      replaceChildren(...nodes) { this.children = [...nodes]; },
       setAttribute(name, value) { this.attributes[name] = value; },
       contains(other) { return this.children.includes(other); },
       focus() { document.activeElement = this; },
+      setSelectionRange() {},
       querySelectorAll(selector) { return selector === 'button' ? this.children : []; },
       set innerHTML(html) {
         this.html = html;
@@ -80,6 +92,37 @@ test('an older save response cannot mark newer edits saved or remove the unload 
   await secondSave;
   assert.equal(h.element('saveState').textContent, 'Saved locally');
   assert.equal(h.unloadBlocked(), false);
+});
+
+test('article preview uses a byline paragraph and plain article body', () => {
+  const h = harness();
+  h.run(`project.articles = [{
+    id:'a',
+    title:'Plain text story',
+    body:'First paragraph.\\n\\nSecond paragraph.',
+    authors:[{name:'Alex Rivera',slug:'alex-rivera'}]
+  }]; selectedId='a'; renderBodyPreview();`);
+  assert.equal(h.run(`articleEditorSource(current())`),'<p class="byline">By <a href="https://sites.nova.edu/mako-media-network/author/alex-rivera/">Alex Rivera </a><span class="bybullet"> •</span></p>\n\nFirst paragraph.\n\nSecond paragraph.');
+  h.run('openBodySource();');
+  const source=h.element('bodySource');
+  assert.match(source.value,/^<p class="byline">/);
+  assert.match(source.value,/First paragraph\.\n\nSecond paragraph\.$/);
+});
+
+test('article body HTML is converted to plain text while byline stays HTML', () => {
+  const h = harness();
+  const result = h.run(`articleBodyPlainText({
+    authors:[{name:'Antonio Miguel Escorzon',slug:''}],
+    body:"Dear Readers,\\n\\nAntonio Miguel Escorzon\\n\\nTake care,\\n\\nAntonio Miguel Escorzon"
+  })`);
+  assert.match(result,/^Dear Readers,/);
+  assert.doesNotMatch(result,/^<p>|<\/p>/);
+  const source=h.run(`articleEditorSource({
+    authors:[{name:'Antonio Miguel Escorzon',slug:''}],
+    body:"Dear Readers,\\n\\nTake care,"
+  })`);
+  assert.match(source,/^<p class="byline">/);
+  assert.match(source,/Dear Readers,\n\nTake care,$/);
 });
 
 test('failed autosave keeps a persistent failure message and dirty unload protection', async () => {

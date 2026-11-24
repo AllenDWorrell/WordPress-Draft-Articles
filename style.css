@@ -139,7 +139,8 @@ input::placeholder,textarea::placeholder { color:var(--muted); opacity:1; }
 .import-warning { background:var(--warning-bg); color:var(--warning-ink); border-radius:var(--radius); font-size:11px; line-height:1.6; padding:10px 12px; margin:16px 0; }
 .body-heading { display:flex; justify-content:space-between; align-items:center; margin:18px 0 8px; }
 #bodySource { width:100%; min-height:calc(100dvh - 360px); height:100%; margin:0; padding:22px; border-color:var(--control-line); background:var(--inspector); resize:none; font:14px/1.6 var(--font-mono); }
-#bodyPreview { width:100%; min-height:calc(100dvh - 360px); height:100%; margin:0; padding:16px; overflow:auto; color:var(--ink); background:var(--inspector); font:400 17px/28px var(--font-copy); cursor:text; }
+#bodyPreview { width:100%; min-height:calc(100dvh - 360px); height:100%; margin:0; padding:16px; overflow:auto; color:var(--ink); background:var(--inspector); font:400 17px/28px var(--font-copy); cursor:text; white-space:pre-wrap; }
+.plain-article-body { white-space:pre-wrap; }
 #bodyPreview p { margin:0 0 1.45em; }
 #bodyPreview p:last-child { margin-bottom:0; }
 #bodyPreview .byline { margin-bottom:1.2em; font-size:.85em; font-weight:600; letter-spacing:.025em; }
